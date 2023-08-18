@@ -5,12 +5,13 @@ import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
 import { toggleTheme } from "../store/themeSlice"; 
 
-import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { Heart, HeartFill } from "react-bootstrap-icons";
 
 const Home = () => {
   const [product, setProduct] = useState([]); 
+  const [loading,setLoading] = useState(true)
   const wishlist = useSelector((state) => state.wishlist);
   const theme = useSelector((state) => state.theme);
 
@@ -35,6 +36,8 @@ const Home = () => {
       setProduct(data); 
     } catch (error) {
       console.log(error);
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -45,6 +48,12 @@ const Home = () => {
   return (
     <div style={{ ...themeStyles[theme], minHeight: "100vh" }}>
       <NavbarComponent />
+      <br />
+      {loading ? (
+        <div className="d-flex justify-content-center align-items-center h-100">
+          <Spinner animation="border" variant="primary" />
+        </div>
+      ) : (
       <Container className="my-4">
         <Button
           onClick={() => dispatch(toggleTheme())}
@@ -111,6 +120,7 @@ const Home = () => {
           ))}
         </Row>
       </Container>
+      )}
     </div>
   );
 };
