@@ -4,10 +4,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
 import { toggleTheme } from "../store/themeSlice"; 
-
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { Heart, HeartFill } from "react-bootstrap-icons";
+import { BASE_URL } from "../utils/constants";
 
 const Home = () => {
   const [product, setProduct] = useState([]); 
@@ -30,8 +30,8 @@ const Home = () => {
 
   const fetchData = async () => {
     try {
-      const response = await axios.get("https://dummyjson.com/products?limit=32");
-      const data = response.data.products;
+      const response = await axios.get(BASE_URL);
+      const data = response.data;
       console.log(data);
       setProduct(data); 
     } catch (error) {
@@ -92,19 +92,21 @@ const Home = () => {
                 </div>
                 <Card.Img
                   variant="top"
-                  src={item.images[0]}
+                  src={item.image}
                   style={{
                     width: "100%",
-                    maxWidth: "350px",
-                    height: "350px",
+                    maxWidth: "300px",
+                    height: "300px",
                     padding: "10px",
                   }}
                 />
                 <Card.Body className="d-flex flex-column">
-                  <Card.Title style={{ color: themeStyles[theme].textColor }}>
+                  <Card.Title className="text-truncate">
                     {item.title}
                   </Card.Title>
-                  <Card.Text style={{ color: themeStyles[theme].textColor }}>
+                  <Card.Text className="h6 text-truncate">{item.description}</Card.Text>
+                  <Card.Text className="h5">Category: {item.category}</Card.Text>
+                  <Card.Text className="h3">
                     Price: {item.price} ₹
                   </Card.Text>
                 </Card.Body>
@@ -121,6 +123,7 @@ const Home = () => {
         </Row>
       </Container>
       )}
+            <hr></hr>
     </div>
   );
 };

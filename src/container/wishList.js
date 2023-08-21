@@ -53,10 +53,10 @@ const WishList = () => {
                     />
                   )}
                 </div>
-                    <Card.Body className="d-flex flex-column align-items-center">
-                      <p>{item.title}</p>
-                      <img
-                        src={item.images[0]}
+                    <Card.Body className="d-flex flex-column ">
+                      <Card.Title className="text-truncate">{item.title}</Card.Title>
+                      <Card.Img
+                        src={item.image}
                         alt="error"
                         style={{
                           width: "150px",
@@ -64,7 +64,7 @@ const WishList = () => {
                           marginBottom: "10px",
                         }}
                       />
-                      <Card.Text>Price: {item.price} ₹ | Discount: {item.discountPercentage}%</Card.Text>
+                      <Card.Text className="h6">Price: {item.price} ₹ | Discount: {item.rating.rate}%</Card.Text>
                     </Card.Body>
                   </Card>
                 </Col>

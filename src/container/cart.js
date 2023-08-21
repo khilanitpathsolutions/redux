@@ -41,10 +41,10 @@ const Cart = () => {
                 <Card
                   style={{ border: '1px solid #dee2e6', marginBottom: '10px' }}
                 >
-                  <Card.Body className="d-flex flex-column align-items-center">
-                    <p>{item.title}</p>
-                    <img
-                      src={item.images[0]}
+                  <Card.Body className="d-flex flex-column">
+                    <Card.Title className='text-truncate'>{item.title}</Card.Title>
+                    <Card.Img
+                      src={item.image}
                       alt="error"
                       style={{
                         width: '150px',
@@ -52,8 +52,8 @@ const Cart = () => {
                         marginBottom: '10px',
                       }}
                     />
-                    <Card.Text>Price: {item.price} ₹</Card.Text>
-                    <Card.Text>Total Price: {item.price * item.quantity}</Card.Text>
+                    <Card.Text className='h5'>Price: {item.price} ₹</Card.Text>
+                    <Card.Text className='h4'>Total Price: {(item.price * item.quantity).toFixed(1)}</Card.Text>
                     <div className="d-flex align-items-center">
                       <Button
                         variant="secondary"
@@ -61,19 +61,21 @@ const Cart = () => {
                       >
                         -
                       </Button>
-                      <span>{item.quantity}</span>
+                      <span style={{padding:"6px"}}>{item.quantity}</span>
                       <Button
                         variant="secondary"
                         onClick={() => dispatch(incrementQuantity(item.id))}
                       >
                         +
                       </Button>
+                      <div style={{width: "100%",display: "flex",justifyContent:"end"}}>
                       <Button
                         variant="danger"
                         onClick={() => dispatch(removeItem(item.id))}
                       >
                         Remove
                       </Button>
+                      </div>
                     </div>
                   </Card.Body>
                 </Card>
