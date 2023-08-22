@@ -7,6 +7,8 @@ import LoginPage from "../container/login";
 import ProtectedRoute from "../utils/protectedRoutes";
 import RegistrationPage from "../container/registration";
 import PublicRoutes from "../utils/publicRoutes";
+import ErrorPage from "../error";
+import Product from "../container/product";
 
 const Routing = () => {
   return (
@@ -29,6 +31,10 @@ const Routing = () => {
         <Route path="/wishlist/*" element={<ProtectedRoute />}>
           <Route index element={<WishList />} />
         </Route>
+        
+        <Route path="/product/:item_id" element={<Product />} />
+
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </BrowserRouter>
   );

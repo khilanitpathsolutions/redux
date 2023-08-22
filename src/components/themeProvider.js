@@ -6,7 +6,7 @@ const ThemeProvider = ({ children }) => {
 
   const themeStyles = {
     light: {
-      backgroundColor: "white",
+      backgroundColor: "#e3e3e3",
       color: "black",
     },
     dark: {

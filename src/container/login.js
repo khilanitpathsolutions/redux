@@ -27,14 +27,15 @@ const LoginPage = () => {
       (user) =>
         user.username === formData.username && user.password === formData.password
     );
-
+  
     if (user) {
-      dispatch(login());
-      navigate('/cart');
+      dispatch(login({ username: user.username })); 
+      navigate('/');
     } else {
       alert('Invalid username or password.');
     }
   };
+  
 
   return (
     <Container className="d-flex justify-content-center align-items-center vh-100">
@@ -66,8 +67,8 @@ const LoginPage = () => {
           <Button variant="primary" onClick={handleLogin} className="w-100">
             Login
           </Button>
-          <Link to="/" className="d-block text-center mt-3">Home</Link>
-          <Link to="/register" className="d-block text-center mt-3">Not Registered? Click Here</Link>
+          <Link to="/" className="d-block text-center mt-3 text-decoration-none">Home</Link>
+          <Link to="/register" className="d-block text-center mt-3 text-decoration-none">Not Registered? Click Here</Link>
         </Form>
       </div>
     </Container>

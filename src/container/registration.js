@@ -84,7 +84,7 @@ const RegistrationPage = () => {
           <Button variant="primary" onClick={handleRegister} className="w-100">
             Register
           </Button>
-          <Link to="/" className="d-block text-center mt-3">Home</Link>
+          <Link to="/" className="d-block text-center mt-3 text-decoration-none">Home</Link>
         </Form>
       </div>
     </Container>
