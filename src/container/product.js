@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { BASE_URL } from "../utils/constants";
-import axios from "axios";
+import React, { } from "react";
 import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
 import { useParams } from "react-router-dom";
@@ -8,33 +6,16 @@ import { Button, Card, Spinner, Row, Col } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { useDispatch, useSelector } from "react-redux";
 import { Heart, HeartFill } from "react-bootstrap-icons";
+import useFetch from "../hooks/useFetch";
 
 const Product = () => {
   const { item_id } = useParams();
-  const [product, setProduct] = useState({});
-  const [loading, setLoading] = useState(true);
   const loggedInUsername = useSelector((state) => state.user.loggedInUsername);
   const wishlist = useSelector((state) => state.wishlist);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const dispatch = useDispatch();
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(`${BASE_URL}/${item_id}`);
-      const productData = response.data;
-      console.log(productData);
-      setProduct(productData);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { data: product, loading } = useFetch(`/products/${item_id}`)
 
   const handleAddToCart = (item) => {
     if (isLoggedIn) {

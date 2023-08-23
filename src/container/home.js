@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/cartSlice";
 import { toggleWishlist } from "../store/wishlistSlice";
@@ -6,14 +6,11 @@ import { toggleTheme } from "../store/themeSlice";
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { Heart, HeartFill } from "react-bootstrap-icons";
-import { BASE_URL } from "../utils/constants";
-import axios from "axios";
 import ImageSwiper from "../components/swiper";
 import { useNavigate } from "react-router-dom";
+import useFetch from "../hooks/useFetch";
 
 const Home = () => {
-  const [product, setProduct] = useState([]);
-  const [loading, setLoading] = useState(true);
   const wishlist = useSelector((state) => state.wishlist);
   const theme = useSelector((state) => state.theme);
   const loggedInUsername = useSelector((state) => state.user.loggedInUsername);
@@ -33,42 +30,41 @@ const Home = () => {
 
   const dispatch = useDispatch();
 
-  const fetchData = async () => {
-    try {
-      const response = await axios.get(BASE_URL);
-      const data = response.data;
-      console.log(data);
-      setProduct(data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: product, loading } = useFetch("/products");
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const handleAddToCart = useCallback(
+    (item) => {
+      if (isLoggedIn) {
+        dispatch(addToCart({ username: loggedInUsername, item }));
+      } else {
+        alert("Please Login to Add product to Cart & Wishlist");
+      }
+    },
+    [isLoggedIn, loggedInUsername, dispatch]
+  );
 
-  const handleAddToCart = (item) => {
-    if (isLoggedIn) {
-      dispatch(addToCart({ username: loggedInUsername, item }));
-    } else {
-      alert("Please Login to Add product to Cart & Wishlist");
-    }
-  };
-
-  const handleToggleWishlist = (item) => {
-    if (isLoggedIn) {
-      dispatch(toggleWishlist({ username: loggedInUsername, item }));
-    } else {
-      alert("Please Login to Add product to Cart & Wishlist");
-    }
-  };
+  const handleToggleWishlist = useCallback(
+    (item) => {
+      if (isLoggedIn) {
+        dispatch(toggleWishlist({ username: loggedInUsername, item }));
+      } else {
+        alert("Please Login to Add product to Cart & Wishlist");
+      }
+    },
+    [isLoggedIn, loggedInUsername, dispatch]
+  );
 
   const handleViewProduct = (itemId) => {
     navigate(`/product/${itemId}`);
   };
+
+  const handleAddProduct = useCallback(() => {
+    if (isLoggedIn) {
+      navigate("/addproduct");
+    } else {
+      alert("Please Login to Add product into the Store");
+    }
+  },[isLoggedIn,navigate]);
 
   return (
     <div
@@ -87,7 +83,9 @@ const Home = () => {
       ) : (
         <Container className="my-4">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h5>Product Cards</h5>
+            <Button variant="secondary" onClick={handleAddProduct}>
+              ADD Products
+            </Button>
             <Button onClick={() => dispatch(toggleTheme())} variant="primary">
               Toggle Theme
             </Button>
@@ -133,6 +131,7 @@ const Home = () => {
                     <Card.Img
                       variant="top"
                       src={item.image}
+                      alt="error"
                       style={{
                         width: "220px",
                         height: "220px",
@@ -171,9 +170,13 @@ const Home = () => {
           </Row>
         </Container>
       )}
-      <div style={{display:"flex",justifyContent:"end",margin: "5px"}}>
-     <Button onClick={()=>window.scrollTo({top: 0, behaviour: "smooth"})}>↑</Button>
-     </div>
+      <div style={{ display: "flex", justifyContent: "end", margin: "5px" }}>
+        <Button
+          onClick={() => window.scrollTo({ top: 0, behaviour: "smooth" })}
+        >
+          ↑
+        </Button>
+      </div>
       <hr />
     </div>
   );
