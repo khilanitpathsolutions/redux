@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import errorImg from '../src/assets/13.png'
+import errorImg from '../assets/13.png'
 import { Button, Card } from 'react-bootstrap'
 
 const ErrorPage = () => {

@@ -21,7 +21,7 @@ const AddProduct = () => {
     e.preventDefault();
 
     try {
-      const response = await axios.post(BASE_URL, productData);
+      const response = await axios.post(`${BASE_URL}/products`, productData);
       console.log('Product added:', response.data);
       setProductData({
         title: '',

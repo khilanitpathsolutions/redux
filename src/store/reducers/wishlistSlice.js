@@ -5,17 +5,17 @@ const wishlistSlice = createSlice({
   initialState: {},
   reducers: {
     toggleWishlist: (state, action) => {
-      const { username, item } = action.payload;
-      if (!state[username]) {
-        state[username] = [];
+      const { email, item } = action.payload;
+      if (!state[email]) {
+        state[email] = [];
       }
 
-      const itemExists = state[username].some((wishlistItem) => wishlistItem.id === item.id);
+      const itemExists = state[email].some((wishlistItem) => wishlistItem.id === item.id);
 
       if (itemExists) {
-        state[username] = state[username].filter((wishlistItem) => wishlistItem.id !== item.id);
+        state[email] = state[email].filter((wishlistItem) => wishlistItem.id !== item.id);
       } else {
-        state[username].push(item);
+        state[email].push(item);
       }
     },
   },

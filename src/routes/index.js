@@ -7,7 +7,7 @@ import LoginPage from "../container/login";
 import ProtectedRoute from "../utils/protectedRoutes";
 import RegistrationPage from "../container/registration";
 import PublicRoutes from "../utils/publicRoutes";
-import ErrorPage from "../error";
+import ErrorPage from "../container/error";
 import Product from "../container/product";
 import AddProduct from "../container/addProduct";
 

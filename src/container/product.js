@@ -1,37 +1,34 @@
-import React, { } from "react";
-import { addToCart } from "../store/cartSlice";
-import { toggleWishlist } from "../store/wishlistSlice";
+import React, { useCallback } from "react";
+import { addToCart } from "../store/reducers/cartSlice";
 import { useParams } from "react-router-dom";
 import { Button, Card, Spinner, Row, Col } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { useDispatch, useSelector } from "react-redux";
-import { Heart, HeartFill } from "react-bootstrap-icons";
 import useFetch from "../hooks/useFetch";
+import WishlistIcon from "../components/wishlistIcon";
+import useToggleWishlist from "../hooks/useToggleWishlist";
 
 const Product = () => {
   const { item_id } = useParams();
-  const loggedInUsername = useSelector((state) => state.user.loggedInUsername);
-  const wishlist = useSelector((state) => state.wishlist);
+  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const dispatch = useDispatch();
 
-  const { data: product, loading } = useFetch(`/products/${item_id}`)
+  const { data: fetchedData, loading } = useFetch(`/products/${item_id}`);
+  const product = fetchedData.data;
 
-  const handleAddToCart = (item) => {
-    if (isLoggedIn) {
-      dispatch(addToCart({ username: loggedInUsername, item }));
-    } else {
-      alert("Please Login to Add product to Cart & Wishlist");
-    }
-  };
+  const handleAddToCart = useCallback(
+    (item) => {
+      if (isLoggedIn) {
+        dispatch(addToCart({ email: loggedInEmail, item }));
+      } else {
+        alert("Please Login to Add product to Cart & Wishlist");
+      }
+    },
+    [isLoggedIn, loggedInEmail, dispatch]
+  );
 
-  const handleToggleWishlist = (item) => {
-    if (isLoggedIn) {
-      dispatch(toggleWishlist({ username: loggedInUsername, item }));
-    } else {
-      alert("Please Login to Add product to Cart & Wishlist");
-    }
-  };
+  const handleToggleWishlist = useToggleWishlist()
 
   return (
     <>
@@ -42,33 +39,18 @@ const Product = () => {
           <Spinner animation="border" variant="primary" />
         </div>
       ) : (
-        <Card style={{ margin: "0 auto", width: "95%",border:'1px solid black',borderRadius:'25px' }}>
-        <div
-                    style={{
-                      display: "flex",
-                      width: "99%",
-                      justifyContent: "end",
-                      position: "relative",
-                      right: "5px",
-                      top: "15px",
-                    }}
-                  >
-                    {wishlist[loggedInUsername]?.some(
-                      (wishlistItem) => wishlistItem.id === product.id
-                    ) ? (
-                      <HeartFill
-                        size={30}
-                        onClick={() => handleToggleWishlist(product)}
-                        style={{ color: "#ff4d4d", cursor: "pointer" }}
-                      />
-                    ) : (
-                      <Heart
-                        size={30}
-                        onClick={() => handleToggleWishlist(product)}
-                        style={{ cursor: "pointer" }}
-                      />
-                    )}
-                  </div>
+        <Card
+          style={{
+            margin: "0 auto",
+            width: "95%",
+            border: "1px solid black",
+            borderRadius: "25px",
+          }}
+        >
+          <WishlistIcon
+            item={product}
+            onToggleWishlist={handleToggleWishlist}
+          />
           <Row>
             <Col md={4}>
               <Card.Img

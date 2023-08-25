@@ -1,22 +1,23 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {
-  incrementQuantity,
-  decrementQuantity,
-  removeItem,
-} from "../store/cartSlice";
+import {incrementQuantity,decrementQuantity,removeItem} from "../store/reducers/cartSlice";
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
+import CustomModal from "../components/modal";
 
 const Cart = () => {
+  const [modalData, setModalData] = useState({
+    showConfirmModal: false,
+    itemToRemove: null,
+  });
   const cartItems = useSelector((state) => state.cart);
-  const loggedInUsername = useSelector((state) => state.user.loggedInUsername);
+  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const dispatch = useDispatch();
 
   const calculateSubTotal = useMemo(() => {
-    const items = cartItems[loggedInUsername] || [];
+    const items = cartItems[loggedInEmail] || [];
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
-  }, [cartItems, loggedInUsername]);
+  }, [cartItems, loggedInEmail]);
 
   const calculateTaxes = useMemo(() => {
     const taxes = calculateSubTotal * 0.18;
@@ -28,12 +29,12 @@ const Cart = () => {
       <NavbarComponent />
       <Container>
         <h2>Cart Items</h2>
-        {cartItems[loggedInUsername]?.length === 0 ? (
+        {cartItems[loggedInEmail]?.length === 0 ? (
           <p>Your cart is empty.</p>
         ) : (
           <>
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-              {cartItems[loggedInUsername]?.map((item) => (
+              {cartItems[loggedInEmail]?.map((item) => (
                 <Col key={item.id}>
                   <Card
                     style={{
@@ -75,7 +76,7 @@ const Cart = () => {
                           onClick={() =>
                             dispatch(
                               decrementQuantity({
-                                username: loggedInUsername,
+                                email: loggedInEmail,
                                 itemId: item.id,
                               })
                             )
@@ -89,7 +90,7 @@ const Cart = () => {
                           onClick={() =>
                             dispatch(
                               incrementQuantity({
-                                username: loggedInUsername,
+                                email: loggedInEmail,
                                 itemId: item.id,
                               })
                             )
@@ -106,14 +107,12 @@ const Cart = () => {
                         >
                           <Button
                             variant="danger"
-                            onClick={() =>
-                              dispatch(
-                                removeItem({
-                                  username: loggedInUsername,
-                                  itemId: item.id,
-                                })
-                              )
-                            }
+                            onClick={() => {
+                              setModalData({
+                                showConfirmModal: true,
+                                itemToRemove: item.id,
+                              });
+                            }}
                           >
                             Remove
                           </Button>
@@ -146,6 +145,36 @@ const Cart = () => {
         )}
         <hr />
       </Container>
+
+      <CustomModal
+        show={modalData.showConfirmModal}
+        onHide={() =>
+          setModalData({
+            showConfirmModal: false,
+            itemToRemove: null,
+          })
+        }
+        title="Confirm Remove"
+        body="Are you sure you want to remove this item from cart ?"
+        onCancel={() =>
+          setModalData({
+            showConfirmModal: false,
+            itemToRemove: null,
+          })
+        }
+        onConfirm={() => {
+          dispatch(
+            removeItem({
+              email: loggedInEmail,
+              itemId: modalData.itemToRemove,
+            })
+          );
+          setModalData({
+            showConfirmModal: false,
+            itemToRemove: null,
+          });
+        }}
+      />
     </>
   );
 };

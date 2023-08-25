@@ -1,77 +1,124 @@
-import React, { useState } from 'react';
-import { Form, Button, Container } from 'react-bootstrap';
-import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../store/userSlice';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { Alert, Button, Container, Spinner } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../store/reducers/userSlice";
+import { Link, useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { validationSchemaLogin } from "../utils/validation";
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const registeredUsers = useSelector((state) => state.user.registeredUsers);
+  const [loading, setLoading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
+  const formik = useFormik({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    validationSchema: validationSchemaLogin,
+    onSubmit: (values) => {
+      setLoading(true);
 
-  const handleLogin = () => {
-    const user = registeredUsers.find(
-      (user) =>
-        user.username === formData.username && user.password === formData.password
-    );
-  
-    if (user) {
-      dispatch(login({ username: user.username })); 
-      navigate('/');
-    } else {
-      alert('Invalid username or password.');
-    }
-  };
-  
+      setTimeout(() => {
+        const user = registeredUsers.find(
+          (user) =>
+            user.email === values.email && user.password === values.password
+        );
+
+        if (user) {
+          dispatch(login({ email: user.email }));
+          navigate("/");
+        } else {
+          setShowAlert(true);
+        }
+
+        setLoading(false);
+      }, 3000);
+    },
+  });
 
   return (
-    <Container className="d-flex justify-content-center align-items-center vh-100">
-      <div style={{ maxWidth: '400px', width: '100%',border: '2px solid black',borderRadius: '25px',padding: '12px' }}>
-        <h2 className="text-center mb-4">Login</h2>
-        <Form>
-          <Form.Group controlId="username">
-            <Form.Label>Username</Form.Label>
-            <Form.Control
-              type="text"
-              name="username"
-              placeholder="Enter username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="custom-input"
-            />
-          </Form.Group>
-          <Form.Group controlId="password">
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="custom-input"
-            />
-          </Form.Group><br></br>
-          <Button variant="primary" onClick={handleLogin} className="w-100">
-            Login
-          </Button>
-          <Link to="/" className="d-block text-center mt-3 text-decoration-none">Home</Link>
-          <Link to="/register" className="d-block text-center mt-3 text-decoration-none">Not Registered? Click Here</Link>
-        </Form>
-      </div>
-    </Container>
+    <>
+      {showAlert && (
+        <Alert variant="danger" onClose={() => setShowAlert(false)} dismissible>
+          Invalid email or password.
+        </Alert>
+      )}
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <div
+          style={{
+            maxWidth: "400px",
+            width: "100%",
+            border: "2px solid black",
+            borderRadius: "25px",
+            padding: "12px",
+          }}
+        >
+          <h2 className="text-center mb-4">Login</h2>
+          <form onSubmit={formik.handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className="form-control"
+                {...formik.getFieldProps("email")}
+              />
+              {formik.touched.email && formik.errors.email && (
+                <div className="text-danger">{formik.errors.email}</div>
+              )}
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                className="form-control"
+                {...formik.getFieldProps("password")}
+              />
+              {formik.touched.password && formik.errors.password && (
+                <div className="text-danger">{formik.errors.password}</div>
+              )}
+            </div>
+            <Button
+              variant="primary"
+              type="submit"
+              className="w-100"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner animation="border" size="sm" /> Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+            <Link
+              to="/"
+              className="d-block text-center mt-3 text-decoration-none"
+            >
+              Home
+            </Link>
+            <Link
+              to="/register"
+              className="d-block text-center mt-3 text-decoration-none"
+            >
+              Not Registered? Click Here
+            </Link>
+          </form>
+        </div>
+      </Container>
+    </>
   );
 };
 

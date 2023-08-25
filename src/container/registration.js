@@ -1,93 +1,131 @@
 import React, { useState } from 'react';
-import { Form, Button, Container } from 'react-bootstrap';
+import { Alert, Button, Container, Spinner } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
-import { register } from '../store/userSlice';
+import { register } from '../store/reducers/userSlice';
 import { Link, useNavigate } from 'react-router-dom';
+import { useFormik } from 'formik';
+import { validationSchemaRegister } from '../utils/validation';
 
 const RegistrationPage = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-    confirmPassword: '',
-  });
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const registeredUsers = useSelector((state) => state.user.registeredUsers);
+  const [loading, setLoading] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationSchema: validationSchemaRegister,
+    onSubmit: (values) => {
+      setLoading(true);
 
-  const handleRegister = () => {
-    const { username, password } = formData;
+      setTimeout(() => {
+        const { email } = values;
 
-    if (!username || !password) {
-      alert('Username and password are required');
-      return;
-    }
+        const isEmailTaken = registeredUsers.some(
+          (user) => user.email === email
+        );
 
-    const isUsernameTaken = registeredUsers.some(
-      (user) => user.username === username
-    );
-
-    if (isUsernameTaken) {
-      alert('Username already taken');
-    } else {
-      dispatch(register(formData));
-      navigate('/login');
-    }
-  };
+        if (isEmailTaken) {
+          setShowAlert(true);
+        } else {
+          dispatch(register(values));
+          navigate('/login');
+        }
+        setLoading(false);
+      }, 3000);
+    },
+  });
 
   return (
-    <Container className="d-flex justify-content-center align-items-center vh-100">
-      <div style={{ maxWidth: '400px', width: '100%',border: '2px solid black',borderRadius: '25px',padding: '12px' }}>
-        <h2 className="text-center mb-4">Registration</h2>
-        <Form>
-          <Form.Group controlId="username">
-            <Form.Label>Username</Form.Label>
-            <Form.Control
-              type="text"
-              name="username"
-              placeholder="Enter username"
-              value={formData.username}
-              onChange={handleInputChange}
-              className="custom-input"
-            />
-          </Form.Group>
-          <Form.Group controlId="password">
-            <Form.Label>Password</Form.Label>
-            <Form.Control
-              type="password"
-              name="password"
-              placeholder="Password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="custom-input"
-            />
-          </Form.Group>
-          <Form.Group controlId="confirmPassword">
-            <Form.Label>Confirm Password</Form.Label>
-            <Form.Control
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              className="custom-input"
-            />
-          </Form.Group><br></br>
-          <Button variant="primary" onClick={handleRegister} className="w-100">
-            Register
-          </Button>
-          <Link to="/" className="d-block text-center mt-3 text-decoration-none">Home</Link>
-        </Form>
-      </div>
-    </Container>
+    <>
+      {showAlert && (
+        <Alert variant="danger" onClose={() => setShowAlert(false)} dismissible>
+          Email is Already Registered
+        </Alert>
+      )}
+      <Container className="d-flex justify-content-center align-items-center vh-100">
+        <div
+          style={{
+            maxWidth: '400px',
+            width: '100%',
+            border: '2px solid black',
+            borderRadius: '25px',
+            padding: '12px',
+          }}
+        >
+          <h2 className="text-center mb-4">Registration Page</h2>
+          <form onSubmit={formik.handleSubmit}>
+            <div className="mb-3">
+              <label htmlFor="email" className="form-label">
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                className="form-control"
+                {...formik.getFieldProps('email')}
+              />
+              {formik.touched.email && formik.errors.email && (
+                <div className="text-danger">{formik.errors.email}</div>
+              )}
+            </div>
+            <div className="mb-3">
+              <label htmlFor="password" className="form-label">
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                className="form-control"
+                {...formik.getFieldProps('password')}
+              />
+              {formik.touched.password && formik.errors.password && (
+                <div className="text-danger">{formik.errors.password}</div>
+              )}
+            </div>
+            <div className="mb-3">
+              <label htmlFor="confirmPassword" className="form-label">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+                className="form-control"
+                {...formik.getFieldProps('confirmPassword')}
+              />
+              {formik.touched.confirmPassword && formik.errors.confirmPassword && (
+                <div className="text-danger">{formik.errors.confirmPassword}</div>
+              )}
+            </div>
+            <Button
+              variant="primary"
+              type="submit"
+              className="w-100"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Spinner animation="border" size="sm" /> Registering...
+                </>
+              ) : (
+                'Register'
+              )}
+            </Button>
+            <Link to="/" className="d-block text-center mt-3 text-decoration-none">
+              Home
+            </Link>
+          </form>
+        </div>
+      </Container>
+    </>
   );
 };
 

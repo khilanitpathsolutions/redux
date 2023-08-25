@@ -1,8 +1,8 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
-import { cartReducer } from "./cartSlice";
-import { wishlistReducer } from "./wishlistSlice";
-import { themeReducer } from "./themeSlice";
-import userReducer from "./userSlice"; 
+import { cartReducer } from "./reducers/cartSlice";
+import { wishlistReducer } from "./reducers/wishlistSlice";
+import { themeReducer } from "./reducers/themeSlice";
+import userReducer from "./reducers/userSlice"; 
 import storage from 'redux-persist/lib/storage';
 import { persistStore, persistReducer } from 'redux-persist';
 

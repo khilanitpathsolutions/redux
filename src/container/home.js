@@ -1,19 +1,18 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart } from "../store/cartSlice";
-import { toggleWishlist } from "../store/wishlistSlice";
-import { toggleTheme } from "../store/themeSlice";
+import { addToCart } from "../store/reducers/cartSlice";
+import { toggleTheme } from "../store/reducers/themeSlice";
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
-import { Heart, HeartFill } from "react-bootstrap-icons";
 import ImageSwiper from "../components/swiper";
 import { useNavigate } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
+import WishlistIcon from "../components/wishlistIcon";
+import useToggleWishlist from "../hooks/useToggleWishlist";
 
 const Home = () => {
-  const wishlist = useSelector((state) => state.wishlist);
   const theme = useSelector((state) => state.theme);
-  const loggedInUsername = useSelector((state) => state.user.loggedInUsername);
+  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const navigate = useNavigate();
 
@@ -30,33 +29,28 @@ const Home = () => {
 
   const dispatch = useDispatch();
 
-  const { data: product, loading } = useFetch("/products");
+  const { data: fetchedData, loading } = useFetch("/products");
+  const products = fetchedData.data;
 
   const handleAddToCart = useCallback(
     (item) => {
       if (isLoggedIn) {
-        dispatch(addToCart({ username: loggedInUsername, item }));
+        dispatch(addToCart({ email: loggedInEmail, item }));
       } else {
         alert("Please Login to Add product to Cart & Wishlist");
       }
     },
-    [isLoggedIn, loggedInUsername, dispatch]
+    [isLoggedIn, loggedInEmail, dispatch]
   );
 
-  const handleToggleWishlist = useCallback(
-    (item) => {
-      if (isLoggedIn) {
-        dispatch(toggleWishlist({ username: loggedInUsername, item }));
-      } else {
-        alert("Please Login to Add product to Cart & Wishlist");
-      }
+  const handleToggleWishlist = useToggleWishlist();
+
+  const handleViewProduct = useCallback(
+    (itemId) => {
+      navigate(`/product/${itemId}`);
     },
-    [isLoggedIn, loggedInUsername, dispatch]
+    [navigate]
   );
-
-  const handleViewProduct = (itemId) => {
-    navigate(`/product/${itemId}`);
-  };
 
   const handleAddProduct = useCallback(() => {
     if (isLoggedIn) {
@@ -64,9 +58,9 @@ const Home = () => {
     } else {
       alert("Please Login to Add product into the Store");
     }
-  },[isLoggedIn,navigate]);
-
-  return (
+  }, [isLoggedIn, navigate]);
+  
+   return (
     <div
       style={{
         ...themeStyles[theme],
@@ -92,35 +86,13 @@ const Home = () => {
           </div>
 
           <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-            {product.map((item) => (
+            {products.map((item) => (
               <Col key={item.id}>
                 <Card style={{ height: "100%", borderRadius: "20px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      width: "99%",
-                      justifyContent: "end",
-                      position: "relative",
-                      right: "5px",
-                      top: "5px",
-                    }}
-                  >
-                    {wishlist[loggedInUsername]?.some(
-                      (wishlistItem) => wishlistItem.id === item.id
-                    ) ? (
-                      <HeartFill
-                        size={30}
-                        onClick={() => handleToggleWishlist(item)}
-                        style={{ color: "#ff4d4d", cursor: "pointer" }}
-                      />
-                    ) : (
-                      <Heart
-                        size={30}
-                        onClick={() => handleToggleWishlist(item)}
-                        style={{ cursor: "pointer" }}
-                      />
-                    )}
-                  </div>
+                <WishlistIcon
+                item={item}
+                onToggleWishlist={handleToggleWishlist}
+              />
                   <div
                     style={{
                       width: "100%",
