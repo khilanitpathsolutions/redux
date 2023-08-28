@@ -6,6 +6,12 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyABCaFjpMD_sjYbO3Rol4twEWbgvzlifMc",
@@ -20,6 +26,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
+const firestore = getFirestore(app);
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -27,7 +34,23 @@ const signInWithGoogle = async () => {
   try {
     const res = await signInWithPopup(auth, googleProvider);
     console.log(res);
-    return res;
+
+    if (res.user.email) {
+      const email = res.user.email;
+      const userRef = doc(firestore, "users", res.user.uid);
+      const userSnapshot = await getDoc(userRef);
+
+      if (!userSnapshot.exists()) {
+        await setDoc(userRef, {
+          email: email,
+        });
+      }
+
+      return res;
+    } else {
+      console.log("Failed to get user email from Google response.");
+      return null;
+    }
   } catch (error) {
     console.log(error.message);
   }
@@ -40,7 +63,16 @@ const signInWithEmailAndPasswordLocal = async (email, password) => {
       email,
       password
     );
-    console.log(userCredential);
+
+    const userRef = doc(firestore, "users", userCredential.user.uid);
+    const userSnapshot = await getDoc(userRef);
+
+    if (!userSnapshot.exists()) {
+      await setDoc(userRef, {
+        email: userCredential.user.email,
+      });
+    }
+
     return userCredential;
   } catch (error) {
     console.log(error.message);
