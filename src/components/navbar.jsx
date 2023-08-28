@@ -1,23 +1,37 @@
 import React, { useState } from "react";
-import { Badge, Container, Nav, Navbar} from "react-bootstrap";
+import { Badge, Container, Nav, Navbar } from "react-bootstrap";
 import { Cart, Heart, BoxArrowRight, PersonFill } from "react-bootstrap-icons";
 import { useSelector, useDispatch } from "react-redux";
 import logo from "../assets/redux.svg";
 import { Link } from "react-router-dom";
 import { logout } from "../store/reducers/userSlice";
 import CustomModal from "./modal";
+import { auth } from "../services/firebase";
 
 const NavbarComponent = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dispatch = useDispatch();
-  const userLoggedInEmail = useSelector((state) => state.user.loggedInEmail); 
+  const userLoggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const cartItems = useSelector((state) => state.cart[userLoggedInEmail] || []);
-  const wishlistItems = useSelector((state) => state.wishlist[userLoggedInEmail] || []);
+  const wishlistItems = useSelector(
+    (state) => state.wishlist[userLoggedInEmail] || []
+  );
   const totalUniqueCartItems = cartItems.length;
   const totalWishlistItems = wishlistItems.length;
 
   const handleLogout = () => {
     setShowLogoutModal(true);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await auth.signOut();
+      dispatch(logout());
+      setShowLogoutModal(false);
+      console.log("User successfully logged out");
+    } catch (error) {
+      console.log(error.message);
+    }
   };
 
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
@@ -42,15 +56,21 @@ const NavbarComponent = () => {
                   style={{ width: "40px", height: "40px", marginRight: "10px" }}
                 />
               </Link>
-              <span style={{color: "black"}}>Redux-Store</span>
+              <span style={{ color: "black" }}>Redux-Store</span>
             </Navbar.Brand>
           </div>
 
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
           <Navbar.Collapse id="responsive-navbar-nav">
             <Nav className="me-auto"></Nav>
-            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-              <h5 style={{fontFamily:'cursive'}}>
+            <div
+              style={{
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <h5 style={{ fontFamily: "cursive" }}>
                 {loggedInEmail ? `LoggedInUser: ${loggedInEmail}` : ""}
               </h5>
             </div>
@@ -120,10 +140,7 @@ const NavbarComponent = () => {
         title="Confirm Sign Out"
         body="Are you sure you want to sign out?"
         onCancel={() => setShowLogoutModal(false)}
-        onConfirm={() => {
-          dispatch(logout());
-          setShowLogoutModal(false);
-        }}
+        onConfirm={handleSignOut}
       />
     </>
   );

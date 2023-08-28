@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import { Alert, Button, Container, Spinner } from "react-bootstrap";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { login } from "../store/reducers/userSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { validationSchemaLogin } from "../utils/validation";
+import {
+  signInWithEmailAndPassword,
+  signInWithGoogle,
+} from "../services/firebase";
+import { Google } from "react-bootstrap-icons";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const registeredUsers = useSelector((state) => state.user.registeredUsers);
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
@@ -19,26 +23,46 @@ const LoginPage = () => {
       password: "",
     },
     validationSchema: validationSchemaLogin,
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       setLoading(true);
 
-      setTimeout(() => {
-        const user = registeredUsers.find(
-          (user) =>
-            user.email === values.email && user.password === values.password
+      try {
+        const res = await signInWithEmailAndPassword(
+          values.email,
+          values.password
         );
-
-        if (user) {
-          dispatch(login({ email: user.email }));
+        if (res && res.user) {
+          dispatch(login({ email: res.user.email }));
           navigate("/");
         } else {
           setShowAlert(true);
         }
+      } catch (error) {
+        console.log(error.message);
+        setShowAlert(true);
+      }
 
-        setLoading(false);
-      }, 3000);
+      setLoading(false);
     },
   });
+
+  const handleGoogleLogin = async () => {
+    try {
+      const res = await signInWithGoogle();
+      console.log("Response from signInWithGoogle:", res);
+      if (res.user.email) {
+        const email = res.user.email;
+        console.log("Email from Google:", email);
+        console.log("Dispatching login action...");
+        dispatch(login({ email }));
+        navigate("/");
+      } else {
+        alert("Failed");
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
 
   return (
     <>
@@ -89,20 +113,38 @@ const LoginPage = () => {
                 <div className="text-danger">{formik.errors.password}</div>
               )}
             </div>
-            <Button
-              variant="primary"
-              type="submit"
-              className="w-100"
-              disabled={loading}
+            <div
+              className="mb-3"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                rowGap: "15px",
+              }}
             >
-              {loading ? (
-                <>
-                  <Spinner animation="border" size="sm" /> Logging in...
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                className="w-100"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner animation="border" size="sm" /> Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
+              </Button>
+
+              <Button
+                className="w-100 d-flex align-items-center justify-content-center"
+                style={{columnGap:"10px"}}
+                variant="secondary"
+                onClick={handleGoogleLogin}
+              >
+                Login With Google <Google />
+              </Button>
+            </div>
             <Link
               to="/"
               className="d-block text-center mt-3 text-decoration-none"
