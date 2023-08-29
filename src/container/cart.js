@@ -1,9 +1,18 @@
 import React, { useMemo, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import {incrementQuantity,decrementQuantity,removeItem} from "../store/reducers/cartSlice";
+import {
+  incrementQuantity,
+  decrementQuantity,
+  removeItem,
+} from "../store/reducers/cartSlice";
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import CustomModal from "../components/modal";
+import {
+  auth,
+  removeFromCartInFirestore,
+  updateQuantityInFirestore,
+} from "../services/firebase";
 
 const Cart = () => {
   const [modalData, setModalData] = useState({
@@ -73,31 +82,46 @@ const Cart = () => {
                       <div className="d-flex align-items-center">
                         <Button
                           variant="primary"
-                          onClick={() =>
-                            dispatch(
-                              decrementQuantity({
-                                email: loggedInEmail,
-                                itemId: item.id,
-                              })
-                            )
-                          }
+                          onClick={() => {
+                            const newQuantity = item.quantity - 1;
+                            if (newQuantity >= 0) {
+                              updateQuantityInFirestore(
+                                auth.currentUser.uid,
+                                item.id,
+                                newQuantity
+                              );
+                              dispatch(
+                                decrementQuantity({
+                                  email: loggedInEmail,
+                                  itemId: item.id,
+                                })
+                              );
+                            }
+                          }}
                         >
                           -
                         </Button>
                         <span style={{ padding: "6px" }}>{item.quantity}</span>
                         <Button
                           variant="primary"
-                          onClick={() =>
+                          onClick={() => {
+                            const newQuantity = item.quantity + 1;
+                            updateQuantityInFirestore(
+                              auth.currentUser.uid,
+                              item.id,
+                              newQuantity
+                            );
                             dispatch(
                               incrementQuantity({
                                 email: loggedInEmail,
                                 itemId: item.id,
                               })
-                            )
-                          }
+                            );
+                          }}
                         >
                           +
                         </Button>
+
                         <div
                           style={{
                             width: "100%",
@@ -163,6 +187,10 @@ const Cart = () => {
           })
         }
         onConfirm={() => {
+          removeFromCartInFirestore(
+            auth.currentUser.uid,
+            modalData.itemToRemove
+          );
           dispatch(
             removeItem({
               email: loggedInEmail,

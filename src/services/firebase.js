@@ -6,6 +6,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
 } from "firebase/auth";
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyABCaFjpMD_sjYbO3Rol4twEWbgvzlifMc",
@@ -20,6 +21,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
+const firestore = getFirestore(app);
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -27,7 +29,23 @@ const signInWithGoogle = async () => {
   try {
     const res = await signInWithPopup(auth, googleProvider);
     console.log(res);
-    return res;
+
+    if (res.user.email) {
+      const email = res.user.email;
+      const userRef = doc(firestore, "users", res.user.uid);
+      const userSnapshot = await getDoc(userRef);
+
+      if (!userSnapshot.exists()) {
+        await setDoc(userRef, {
+          email: email,
+        });
+      }
+
+      return res;
+    } else {
+      console.log("Failed to get user email from Google response.");
+      return null;
+    }
   } catch (error) {
     console.log(error.message);
   }
@@ -40,10 +58,121 @@ const signInWithEmailAndPasswordLocal = async (email, password) => {
       email,
       password
     );
-    console.log(userCredential);
+
+    const userRef = doc(firestore, "users", userCredential.user.uid);
+    const userSnapshot = await getDoc(userRef);
+
+    if (!userSnapshot.exists()) {
+      await setDoc(userRef, {
+        email: userCredential.user.email,
+      });
+    }
+
     return userCredential;
   } catch (error) {
     console.log(error.message);
+    throw error;
+  }
+};
+
+const addToCartInFirestore = async (uid, item) => {
+  try {
+    const cartRef = doc(firestore, "carts", uid);
+    const cartSnapshot = await getDoc(cartRef);
+
+    if (cartSnapshot.exists()) {
+      const cartData = cartSnapshot.data();
+      const updatedCart = {
+        items: [...cartData.items, item],
+      };
+      await setDoc(cartRef, updatedCart);
+    } else {
+      const newCart = {
+        items: [item],
+      };
+      await setDoc(cartRef, newCart);
+    }
+  } catch (error) {
+    console.log("Error adding to cart:", error.message);
+    throw error;
+  }
+};
+
+const removeFromCartInFirestore = async (uid, itemId) => {
+  try {
+    const cartRef = doc(firestore, "carts", uid);
+    const cartSnapshot = await getDoc(cartRef);
+
+    if (cartSnapshot.exists()) {
+      const cartData = cartSnapshot.data();
+      const updatedItems = cartData.items.filter((item) => item.id !== itemId);
+      await setDoc(cartRef, { items: updatedItems });
+    }
+  } catch (error) {
+    console.log("Error removing from cart:", error.message);
+    throw error;
+  }
+};
+
+const updateQuantityInFirestore = async (uid, itemId, newQuantity) => {
+  try {
+    const cartRef = doc(firestore, "carts", uid);
+    const cartSnapshot = await getDoc(cartRef);
+
+    if (cartSnapshot.exists()) {
+      const cartData = cartSnapshot.data();
+      const updatedItems = cartData.items.map((item) => {
+        if (item.id === itemId) {
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      });
+
+      await setDoc(cartRef, { items: updatedItems });
+    }
+  } catch (error) {
+    console.log("Error updating quantity:", error.message);
+    throw error;
+  }
+};
+
+const addToWishlistInFirestore = async (uid, item) => {
+  try {
+    const wishlistRef = doc(firestore, "wishlists", uid);
+    const wishlistSnapshot = await getDoc(wishlistRef);
+
+    if (wishlistSnapshot.exists()) {
+      const wishlistData = wishlistSnapshot.data();
+      const updatedWishlist = {
+        items: [...wishlistData.items, item],
+      };
+      await setDoc(wishlistRef, updatedWishlist);
+    } else {
+      const newWishlist = {
+        items: [item],
+      };
+      await setDoc(wishlistRef, newWishlist);
+    }
+  } catch (error) {
+    console.log("Error adding to wishlist:", error.message);
+    throw error;
+  }
+};
+
+const removeFromWishlistInFirestore = async (uid, itemId) => {
+  try {
+    const wishlistRef = doc(firestore, "wishlists", uid);
+    const wishlistSnapshot = await getDoc(wishlistRef);
+
+    if (wishlistSnapshot.exists()) {
+      const wishlistData = wishlistSnapshot.data();
+      const updatedItems = wishlistData.items.filter(
+        (item) => item.id !== itemId
+      );
+      await setDoc(wishlistRef, { items: updatedItems });
+    }
+  } catch (error) {
+    console.log("Error removing from wishlist:", error.message);
     throw error;
   }
 };
@@ -54,4 +183,9 @@ export {
   auth,
   signInWithGoogle,
   signInWithEmailAndPasswordLocal as signInWithEmailAndPassword,
+  addToCartInFirestore,
+  removeFromCartInFirestore,
+  updateQuantityInFirestore,
+  addToWishlistInFirestore,
+  removeFromWishlistInFirestore,
 };

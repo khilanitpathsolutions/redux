@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import useFetch from "../hooks/useFetch";
 import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
+import { addToCartInFirestore, auth } from "../services/firebase";
 
 const Home = () => {
   const theme = useSelector((state) => state.theme);
@@ -33,16 +34,22 @@ const Home = () => {
   const products = fetchedData.data;
 
   const handleAddToCart = useCallback(
-    (item) => {
+    async (item) => {
       if (isLoggedIn) {
         dispatch(addToCart({ email: loggedInEmail, item }));
+        try {
+          await addToCartInFirestore(auth.currentUser.uid, item);
+          console.log("Product added to cart!");
+        } catch (error) {
+          console.log("Failed to add product to cart.");
+        }
       } else {
-        alert("Please Login to Add product to Cart & Wishlist");
+        alert("Please login to add the product to the cart.");
       }
     },
     [isLoggedIn, loggedInEmail, dispatch]
   );
-
+  
   const handleToggleWishlist = useToggleWishlist();
 
   const handleViewProduct = useCallback(
