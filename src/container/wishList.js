@@ -1,27 +1,26 @@
 import React, { } from "react";
-import { useSelector} from "react-redux";
 import { Container, Row, Col, Card } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
+import { useWishlist } from "../utils/wishlistContext";
 
 const WishList = () => {
-  const wishlistItems = useSelector((state) => state.wishlist);
-  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
-
-  const handleToggleWishlist = useToggleWishlist();
+  
+  const { fetchWishlistItems,wishlistItems } = useWishlist();
+  const handleToggleWishlist = useToggleWishlist(fetchWishlistItems);
 
   return (
     <>
       <NavbarComponent />
       <Container>
         <h2>WishList Items</h2>
-        {wishlistItems[loggedInEmail]?.length === 0 ? (
+        {wishlistItems.length === 0 ? (
           <p>Your Wishlist is Empty</p>
         ) : (
           <>
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-              {wishlistItems[loggedInEmail]?.map((item) => (
+              {wishlistItems.map((item) => (
                 <Col key={item.id}>
                   <Card
                     style={{
@@ -32,8 +31,9 @@ const WishList = () => {
                   >
                     <WishlistIcon
                       item={item}
-                      onToggleWishlist={handleToggleWishlist}
+                      onToggleWishlist={()=>handleToggleWishlist(item)}
                     />
+
                     <Card.Body className="d-flex flex-column">
                       <Card.Title className="text-truncate">
                         {item.title}

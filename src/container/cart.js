@@ -1,32 +1,77 @@
-import React, { useMemo, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import {
-  incrementQuantity,
-  decrementQuantity,
-  removeItem,
-} from "../store/reducers/cartSlice";
+import React, { useEffect, useMemo, useState } from "react";
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import CustomModal from "../components/modal";
-import {
-  auth,
-  removeFromCartInFirestore,
-  updateQuantityInFirestore,
-} from "../services/firebase";
+import { auth, fetchCartItemsFromFirestore, removeFromCartInFirestore, updateQuantityInFirestore } from "../services/firebase";
 
 const Cart = () => {
   const [modalData, setModalData] = useState({
     showConfirmModal: false,
-    itemToRemove: null,
+    itemToRemove: null
   });
-  const cartItems = useSelector((state) => state.cart);
-  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
-  const dispatch = useDispatch();
+  const [cartItems, setCartItems] = useState([]);
+  const [user, setUser] = useState(null);
+
+  const fetchCartItems = async () => {
+    if (auth.currentUser) {
+      try {
+        const items = await fetchCartItemsFromFirestore(auth.currentUser.uid);
+        setCartItems(items);
+      } catch (error) {
+        console.error("Error fetching cart items:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+      if (user) {
+        fetchCartItems();
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleIncrement = (item) => {
+    const newQuantity = item.quantity + 1;
+    updateQuantityInFirestore(user.uid, item.id, newQuantity)
+      .then(() => {
+        fetchCartItems();
+      })
+      .catch((error) => {
+        console.error("Error updating quantity:", error);
+      });
+  };
+
+  const handleDecrement = (item) => {
+    const newQuantity = item.quantity - 1;
+    if (newQuantity >= 0) {
+      updateQuantityInFirestore(user.uid, item.id, newQuantity)
+        .then(() => {
+          fetchCartItems();
+        })
+        .catch((error) => {
+          console.error("Error updating quantity:", error);
+        });
+    }
+  };
+
+  const handleRemove = (itemId) => {
+    removeFromCartInFirestore(user.uid, itemId)
+      .then(() => {
+        fetchCartItems();
+      })
+      .catch((error) => {
+        console.error("Error removing item:", error);
+      });
+  };
 
   const calculateSubTotal = useMemo(() => {
-    const items = cartItems[loggedInEmail] || [];
+    const items = cartItems || [];
     return items.reduce((total, item) => total + item.price * item.quantity, 0);
-  }, [cartItems, loggedInEmail]);
+  }, [cartItems]);
 
   const calculateTaxes = useMemo(() => {
     const taxes = calculateSubTotal * 0.18;
@@ -38,18 +83,18 @@ const Cart = () => {
       <NavbarComponent />
       <Container>
         <h2>Cart Items</h2>
-        {cartItems[loggedInEmail]?.length === 0 ? (
+        {cartItems.length === 0 ? (
           <p>Your cart is empty.</p>
         ) : (
           <>
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-              {cartItems[loggedInEmail]?.map((item) => (
+              {cartItems.map((item) => (
                 <Col key={item.id}>
                   <Card
                     style={{
                       border: "1px solid black",
                       borderRadius: "20px",
-                      marginBottom: "10px",
+                      marginBottom: "10px"
                     }}
                   >
                     <Card.Body className="d-flex flex-column">
@@ -60,7 +105,7 @@ const Cart = () => {
                         style={{
                           width: "100%",
                           display: "flex",
-                          justifyContent: "center",
+                          justifyContent: "center"
                         }}
                       >
                         <Card.Img
@@ -69,7 +114,7 @@ const Cart = () => {
                           style={{
                             width: "150px",
                             height: "150px",
-                            marginBottom: "10px",
+                            marginBottom: "10px"
                           }}
                         />
                       </div>
@@ -82,51 +127,22 @@ const Cart = () => {
                       <div className="d-flex align-items-center">
                         <Button
                           variant="primary"
-                          onClick={() => {
-                            const newQuantity = item.quantity - 1;
-                            if (newQuantity >= 0) {
-                              updateQuantityInFirestore(
-                                auth.currentUser.uid,
-                                item.id,
-                                newQuantity
-                              );
-                              dispatch(
-                                decrementQuantity({
-                                  email: loggedInEmail,
-                                  itemId: item.id,
-                                })
-                              );
-                            }
-                          }}
+                          onClick={() => handleDecrement(item)}
                         >
                           -
                         </Button>
                         <span style={{ padding: "6px" }}>{item.quantity}</span>
                         <Button
                           variant="primary"
-                          onClick={() => {
-                            const newQuantity = item.quantity + 1;
-                            updateQuantityInFirestore(
-                              auth.currentUser.uid,
-                              item.id,
-                              newQuantity
-                            );
-                            dispatch(
-                              incrementQuantity({
-                                email: loggedInEmail,
-                                itemId: item.id,
-                              })
-                            );
-                          }}
+                          onClick={() => handleIncrement(item)}
                         >
                           +
                         </Button>
-
                         <div
                           style={{
                             width: "100%",
                             display: "flex",
-                            justifyContent: "end",
+                            justifyContent: "end"
                           }}
                         >
                           <Button
@@ -134,7 +150,7 @@ const Cart = () => {
                             onClick={() => {
                               setModalData({
                                 showConfirmModal: true,
-                                itemToRemove: item.id,
+                                itemToRemove: item.id
                               });
                             }}
                           >
@@ -154,7 +170,7 @@ const Cart = () => {
                 background: "#e6fff2",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
+                alignItems: "center"
               }}
             >
               <h3>Cart-Total</h3>
@@ -175,31 +191,22 @@ const Cart = () => {
         onHide={() =>
           setModalData({
             showConfirmModal: false,
-            itemToRemove: null,
+            itemToRemove: null
           })
         }
         title="Confirm Remove"
-        body="Are you sure you want to remove this item from cart ?"
+        body="Are you sure you want to remove this item from cart?"
         onCancel={() =>
           setModalData({
             showConfirmModal: false,
-            itemToRemove: null,
+            itemToRemove: null
           })
         }
         onConfirm={() => {
-          removeFromCartInFirestore(
-            auth.currentUser.uid,
-            modalData.itemToRemove
-          );
-          dispatch(
-            removeItem({
-              email: loggedInEmail,
-              itemId: modalData.itemToRemove,
-            })
-          );
+          handleRemove(modalData.itemToRemove);
           setModalData({
             showConfirmModal: false,
-            itemToRemove: null,
+            itemToRemove: null
           });
         }}
       />

@@ -6,7 +6,7 @@ import logo from "../assets/redux.svg";
 import { Link } from "react-router-dom";
 import { logout } from "../store/reducers/userSlice";
 import CustomModal from "./modal";
-import { auth } from "../services/firebase";
+import {auth} from "../services/firebase";
 
 const NavbarComponent = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -18,6 +18,7 @@ const NavbarComponent = () => {
   );
   const totalUniqueCartItems = cartItems.length;
   const totalWishlistItems = wishlistItems.length;
+  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -33,8 +34,6 @@ const NavbarComponent = () => {
       console.log(error.message);
     }
   };
-
-  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
 
   return (
     <>

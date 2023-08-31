@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { toggleWishlist } from "../store/reducers/wishlistSlice";
 import { addToWishlistInFirestore, auth, removeFromWishlistInFirestore } from "../services/firebase";
 
-const useToggleWishlist = () => {
+const useToggleWishlist = (fetchWishlistItems) => {
   const dispatch = useDispatch();
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
@@ -25,6 +25,8 @@ const useToggleWishlist = () => {
     }
 
     dispatch(toggleWishlist({ email: loggedInEmail, item }));
+
+    fetchWishlistItems()
   };
 
   return handleToggleWishlist;

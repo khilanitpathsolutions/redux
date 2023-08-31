@@ -8,6 +8,7 @@ import useFetch from "../hooks/useFetch";
 import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
 import { addToCartInFirestore, auth } from "../services/firebase";
+import { useWishlist } from "../utils/wishlistContext";
 
 const Product = () => {
   const { item_id } = useParams();
@@ -35,7 +36,8 @@ const Product = () => {
     [isLoggedIn, loggedInEmail, dispatch]
   );
 
-  const handleToggleWishlist = useToggleWishlist()
+  const { fetchWishlistItems } = useWishlist();
+  const handleToggleWishlist = useToggleWishlist(fetchWishlistItems);
 
   return (
     <>
@@ -56,7 +58,7 @@ const Product = () => {
         >
           <WishlistIcon
             item={product}
-            onToggleWishlist={handleToggleWishlist}
+            onToggleWishlist={()=>handleToggleWishlist(product)}
           />
           <Row>
             <Col md={4}>

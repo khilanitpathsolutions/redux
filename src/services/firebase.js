@@ -4,13 +4,14 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithPopup
 } from "firebase/auth";
 import {
   getFirestore,
   doc,
   setDoc,
   getDoc,
+  collection
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -20,7 +21,7 @@ const firebaseConfig = {
   storageBucket: "redux-demo-b6443.appspot.com",
   messagingSenderId: "107044157191",
   appId: "1:107044157191:web:0b81456de8ee1600eeb7a2",
-  measurementId: "G-12C43E9FX7",
+  measurementId: "G-12C43E9FX7"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -42,7 +43,7 @@ const signInWithGoogle = async () => {
 
       if (!userSnapshot.exists()) {
         await setDoc(userRef, {
-          email: email,
+          email: email
         });
       }
 
@@ -69,7 +70,7 @@ const signInWithEmailAndPasswordLocal = async (email, password) => {
 
     if (!userSnapshot.exists()) {
       await setDoc(userRef, {
-        email: userCredential.user.email,
+        email: userCredential.user.email
       });
     }
 
@@ -87,13 +88,31 @@ const addToCartInFirestore = async (uid, item) => {
 
     if (cartSnapshot.exists()) {
       const cartData = cartSnapshot.data();
+      const existingItems = cartData.items;
+
+      let itemUpdated = false;
+      const updatedItems = existingItems.map((existingItem) => {
+        if (existingItem.id === item.id) {
+          itemUpdated = true;
+          return {
+            ...existingItem,
+            quantity: existingItem.quantity + 1
+          };
+        }
+        return existingItem;
+      });
+
+      if (!itemUpdated) {
+        updatedItems.push({ ...item, quantity: 1 });
+      }
+
       const updatedCart = {
-        items: [...cartData.items, item],
+        items: updatedItems
       };
       await setDoc(cartRef, updatedCart);
     } else {
       const newCart = {
-        items: [item],
+        items: [{ ...item, quantity: 1 }]
       };
       await setDoc(cartRef, newCart);
     }
@@ -149,12 +168,12 @@ const addToWishlistInFirestore = async (uid, item) => {
     if (wishlistSnapshot.exists()) {
       const wishlistData = wishlistSnapshot.data();
       const updatedWishlist = {
-        items: [...wishlistData.items, item],
+        items: [...wishlistData.items, item]
       };
       await setDoc(wishlistRef, updatedWishlist);
     } else {
       const newWishlist = {
-        items: [item],
+        items: [item]
       };
       await setDoc(wishlistRef, newWishlist);
     }
@@ -182,6 +201,41 @@ const removeFromWishlistInFirestore = async (uid, itemId) => {
   }
 };
 
+const cartsCollection = collection(firestore, "carts");
+
+const fetchCartItemsFromFirestore = async (uid) => {
+  try {
+    const cartRef = doc(cartsCollection, uid);
+    const cartSnapshot = await getDoc(cartRef);
+    if (cartSnapshot.exists()) {
+      return cartSnapshot.data().items;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.log("Error fetching cart items:", error.message);
+    throw error;
+  }
+};
+
+const wishlistsCollection = collection(firestore, "wishlists");
+
+const fetchWishlistItemsFromFirestore = async (uid) => {
+  try {
+    const wishlistRef = doc(wishlistsCollection, uid);
+    const wishlistSnapshot = await getDoc(wishlistRef);
+
+    if (wishlistSnapshot.exists()) {
+      return wishlistSnapshot.data().items;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.log("Error fetching wishlist items:", error.message);
+    throw error;
+  }
+};
+
 export {
   app,
   analytics,
@@ -193,4 +247,7 @@ export {
   updateQuantityInFirestore,
   addToWishlistInFirestore,
   removeFromWishlistInFirestore,
+  fetchCartItemsFromFirestore,
+  fetchWishlistItemsFromFirestore,
+  firestore
 };
