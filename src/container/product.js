@@ -9,6 +9,7 @@ import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
 import { addToCartInFirestore, auth } from "../services/firebase";
 import { useWishlist } from "../utils/wishlistContext";
+import { useCart } from "../utils/cartContext";
 
 const Product = () => {
   const { item_id } = useParams();
@@ -18,7 +19,7 @@ const Product = () => {
 
   const { data: fetchedData, loading } = useFetch(`/products/${item_id}`);
   const product = fetchedData.data;
-
+  const {fetchCartItems}=useCart()
   const handleAddToCart = useCallback(
     async (item) => {
       if (isLoggedIn) {
@@ -29,11 +30,12 @@ const Product = () => {
         } catch (error) {
           console.log("Failed to add product to cart.");
         }
+        fetchCartItems()
       } else {
         alert("Please login to add the product to the cart.");
       }
     },
-    [isLoggedIn, loggedInEmail, dispatch]
+    [isLoggedIn, loggedInEmail, dispatch,fetchCartItems]
   );
 
   const { fetchWishlistItems } = useWishlist();

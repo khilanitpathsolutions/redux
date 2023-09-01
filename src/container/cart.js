@@ -2,36 +2,20 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Container, Row, Col, Button, Card } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import CustomModal from "../components/modal";
-import { auth, fetchCartItemsFromFirestore, removeFromCartInFirestore, updateQuantityInFirestore } from "../services/firebase";
+import { removeFromCartInFirestore, updateQuantityInFirestore } from "../services/firebase";
+import { useCart } from "../utils/cartContext";
 
 const Cart = () => {
   const [modalData, setModalData] = useState({
     showConfirmModal: false,
     itemToRemove: null
   });
-  const [cartItems, setCartItems] = useState([]);
-  const [user, setUser] = useState(null);
-
-  const fetchCartItems = async () => {
-    if (auth.currentUser) {
-      try {
-        const items = await fetchCartItemsFromFirestore(auth.currentUser.uid);
-        setCartItems(items);
-      } catch (error) {
-        console.error("Error fetching cart items:", error);
-      }
-    }
-  };
-
+  const {cartItems,user,fetchCartItems} = useCart()
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      if (user) {
-        fetchCartItems();
-      }
-    });
-
-    return () => unsubscribe();
+    if (user) {
+      fetchCartItems();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleIncrement = (item) => {
@@ -80,7 +64,7 @@ const Cart = () => {
 
   return (
     <>
-      <NavbarComponent />
+      <NavbarComponent cartItem={cartItems} />
       <Container>
         <h2>Cart Items</h2>
         {cartItems.length === 0 ? (

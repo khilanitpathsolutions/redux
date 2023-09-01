@@ -1,21 +1,49 @@
-import React, { } from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
 import { useWishlist } from "../utils/wishlistContext";
+import { auth } from "../services/firebase";
 
 const WishList = () => {
-  
-  const { fetchWishlistItems,wishlistItems } = useWishlist();
+  const { wishlistItems, fetchWishlistItems } = useWishlist();
   const handleToggleWishlist = useToggleWishlist(fetchWishlistItems);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        fetchWishlistItems()
+          .then(() => {
+            setIsLoading(false);
+          })
+          .catch((error) => {
+            setError(error);
+            setIsLoading(false);
+          });
+      } else {
+        setIsLoading(false);
+      }
+    });
+  
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  
 
   return (
     <>
       <NavbarComponent />
       <Container>
         <h2>WishList Items</h2>
-        {wishlistItems.length === 0 ? (
+        {isLoading ? (
+          <p>Loading wishlist items...</p>
+        ) : error ? (
+          <p>Error: {error.message}</p>
+        ) : wishlistItems.length === 0 ? (
           <p>Your Wishlist is Empty</p>
         ) : (
           <>
@@ -31,7 +59,7 @@ const WishList = () => {
                   >
                     <WishlistIcon
                       item={item}
-                      onToggleWishlist={()=>handleToggleWishlist(item)}
+                      onToggleWishlist={() => handleToggleWishlist(item)}
                     />
 
                     <Card.Body className="d-flex flex-column">

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Badge, Container, Nav, Navbar } from "react-bootstrap";
 import { Cart, Heart, BoxArrowRight, PersonFill } from "react-bootstrap-icons";
 import { useSelector, useDispatch } from "react-redux";
@@ -7,19 +7,25 @@ import { Link } from "react-router-dom";
 import { logout } from "../store/reducers/userSlice";
 import CustomModal from "./modal";
 import {auth} from "../services/firebase";
+import { useWishlist } from "../utils/wishlistContext";
+import { useCart } from "../utils/cartContext";
 
 const NavbarComponent = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dispatch = useDispatch();
-  const userLoggedInEmail = useSelector((state) => state.user.loggedInEmail);
-  const cartItems = useSelector((state) => state.cart[userLoggedInEmail] || []);
-  const wishlistItems = useSelector(
-    (state) => state.wishlist[userLoggedInEmail] || []
-  );
-  const totalUniqueCartItems = cartItems.length;
-  const totalWishlistItems = wishlistItems.length;
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
+  const { wishlistItems } = useWishlist();
 
+  const {cartItems,user,fetchCartItems} = useCart()
+
+  useEffect(() => {
+    if (user) {
+      fetchCartItems();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -30,10 +36,12 @@ const NavbarComponent = () => {
       dispatch(logout());
       setShowLogoutModal(false);
       console.log("User successfully logged out");
+      window.location.reload(true);
     } catch (error) {
       console.log(error.message);
     }
   };
+  
 
   return (
     <>
@@ -55,7 +63,7 @@ const NavbarComponent = () => {
                   style={{ width: "40px", height: "40px", marginRight: "10px" }}
                 />
               </Link>
-              <span style={{ color: "black" }}>Redux-Store</span>
+              <span style={{color: "black"}}>Redux-Store</span>
             </Navbar.Brand>
           </div>
 
@@ -80,7 +88,7 @@ const NavbarComponent = () => {
                 className="text-decoration-none text-dark d-flex align-items-center"
               >
                 <Cart size={24} />
-                {totalUniqueCartItems > 0 && (
+                {cartItems.length > 0 && (
                   <div>
                     <Badge
                       bg="danger"
@@ -91,7 +99,7 @@ const NavbarComponent = () => {
                         right: "12px",
                       }}
                     >
-                      {totalUniqueCartItems}
+                      {cartItems.length}
                     </Badge>
                   </div>
                 )}
@@ -102,7 +110,7 @@ const NavbarComponent = () => {
                 className="text-decoration-none text-dark d-flex align-items-center"
               >
                 <Heart size={24} />
-                {totalWishlistItems > 0 && (
+                {wishlistItems.length > 0 && (
                   <div>
                     <Badge
                       bg="danger"
@@ -113,7 +121,7 @@ const NavbarComponent = () => {
                         right: "12px",
                       }}
                     >
-                      {totalWishlistItems}
+                      {wishlistItems.length}
                     </Badge>
                   </div>
                 )}

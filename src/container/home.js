@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/reducers/cartSlice";
 import { toggleTheme } from "../store/reducers/themeSlice";
@@ -11,12 +11,38 @@ import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
 import { addToCartInFirestore, auth } from "../services/firebase";
 import { useWishlist } from "../utils/wishlistContext";
+import { useCart } from "../utils/cartContext";
 
 const Home = () => {
   const theme = useSelector((state) => state.theme);
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const navigate = useNavigate();
+  const {fetchCartItems}= useCart()
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        fetchWishlistItems()
+          .then(() => {
+            setIsLoading(false);
+          })
+          .catch((error) => {
+            setError(error);
+            setIsLoading(false);
+          });
+      } else {
+        setIsLoading(false);
+      }
+    });
+  
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  console.log(isLoading,error)
+  
 
   const themeStyles = {
     light: {
@@ -44,16 +70,16 @@ const Home = () => {
         } catch (error) {
           console.log("Failed to add product to cart.");
         }
+        fetchCartItems()
       } else {
         alert("Please login to add the product to the cart.");
       }
     },
-    [isLoggedIn, loggedInEmail, dispatch]
+    [isLoggedIn, loggedInEmail, dispatch,fetchCartItems]
   );
   
-  const { fetchWishlistItems } = useWishlist();
+  const { fetchWishlistItems} = useWishlist();
   const handleToggleWishlist = useToggleWishlist(fetchWishlistItems);
-
 
   const handleViewProduct = useCallback(
     (itemId) => {
@@ -139,10 +165,11 @@ const Home = () => {
                       {item.rating.count} Users)
                     </Card.Text>
                   </Card.Body>
+                  <Button variant="primary" style={{margin: "5px"}}>Buy Now</Button>
                   <Button
                     onClick={() => handleAddToCart(item)}
                     variant="warning"
-                    style={{ margin: "10px" }}
+                    style={{ margin: "5px" }}
                   >
                     ADD TO CART
                   </Button>

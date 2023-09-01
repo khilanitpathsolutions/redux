@@ -1,12 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
 import { toggleWishlist } from "../store/reducers/wishlistSlice";
 import { addToWishlistInFirestore, auth, removeFromWishlistInFirestore } from "../services/firebase";
+import { useWishlist } from "../utils/wishlistContext"; 
 
-const useToggleWishlist = (fetchWishlistItems) => {
+const useToggleWishlist = () => {
   const dispatch = useDispatch();
-  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
+  const { wishlistItems, fetchWishlistItems } = useWishlist(); 
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
-  const wishlist = useSelector((state) => state.wishlist); 
 
   const handleToggleWishlist = async (item) => {
     if (!isLoggedIn) {
@@ -14,19 +14,19 @@ const useToggleWishlist = (fetchWishlistItems) => {
       return;
     }
 
-    const isItemInWishlist = wishlist[loggedInEmail]?.find(
+    const isItemInWishlist = wishlistItems.find(
       (wishlistItem) => wishlistItem.id === item.id
     );
 
     if (isItemInWishlist) {
-      await removeFromWishlistInFirestore(auth.currentUser.uid, item.id); 
+      await removeFromWishlistInFirestore(auth.currentUser.uid, item.id);
     } else {
-      await addToWishlistInFirestore(auth.currentUser.uid, item); 
+      await addToWishlistInFirestore(auth.currentUser.uid, item);
     }
 
-    dispatch(toggleWishlist({ email: loggedInEmail, item }));
+    dispatch(toggleWishlist({ email: auth.currentUser.uid, item }));
 
-    fetchWishlistItems()
+    fetchWishlistItems();
   };
 
   return handleToggleWishlist;

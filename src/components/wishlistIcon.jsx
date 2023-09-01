@@ -1,14 +1,17 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useState } from "react";
 import { Heart, HeartFill } from "react-bootstrap-icons";
+import { useWishlist } from "../utils/wishlistContext";
 
 const WishlistIcon = ({ item, onToggleWishlist }) => {
-  const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
-  const wishlist = useSelector((state) => state.wishlist);
+  const { wishlistItems } = useWishlist();
+  const [isItemInWishlist, setIsItemInWishlist] = useState(false);
 
-  const isItemInWishlist = wishlist[loggedInEmail]?.find(
-    (wishlistItem) => wishlistItem.id === item.id
-  );
+  useEffect(() => {
+    const itemInWishlist = wishlistItems.find(
+      (wishlistItem) => wishlistItem.id === item.id
+    );
+    setIsItemInWishlist(!!itemInWishlist);
+  }, [wishlistItems, item.id]);
 
   const IconComponent = isItemInWishlist ? HeartFill : Heart;
 

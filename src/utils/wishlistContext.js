@@ -17,6 +17,7 @@ export const WishlistProvider = ({ children }) => {
   useEffect(() => {
     fetchWishlistItems();
   }, []);
+  
 
   return (
     <WishlistContext.Provider value={{ wishlistItems, fetchWishlistItems }}>
