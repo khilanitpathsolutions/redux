@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Badge, Container, Nav, Navbar } from "react-bootstrap";
+import { Badge, Container, Dropdown, Nav, Navbar } from "react-bootstrap";
 import { Cart, Heart, BoxArrowRight, PersonFill } from "react-bootstrap-icons";
 import { useSelector, useDispatch } from "react-redux";
 import logo from "../assets/redux.svg";
 import { Link } from "react-router-dom";
 import { logout } from "../store/reducers/userSlice";
 import CustomModal from "./modal";
-import {auth} from "../services/firebase";
+import { auth } from "../services/firebase";
 import { useWishlist } from "../utils/wishlistContext";
 import { useCart } from "../utils/cartContext";
 
@@ -16,7 +16,7 @@ const NavbarComponent = () => {
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const { wishlistItems } = useWishlist();
 
-  const {cartItems,user,fetchCartItems} = useCart()
+  const { cartItems, user, fetchCartItems } = useCart();
 
   useEffect(() => {
     if (user) {
@@ -25,7 +25,6 @@ const NavbarComponent = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -41,7 +40,6 @@ const NavbarComponent = () => {
       console.log(error.message);
     }
   };
-  
 
   return (
     <>
@@ -63,7 +61,7 @@ const NavbarComponent = () => {
                   style={{ width: "40px", height: "40px", marginRight: "10px" }}
                 />
               </Link>
-              <span style={{color: "black"}}>Redux-Store</span>
+              <span style={{ color: "black" }}>Redux-Store</span>
             </Navbar.Brand>
           </div>
 
@@ -126,12 +124,25 @@ const NavbarComponent = () => {
                   </div>
                 )}
               </Nav.Link>
-              <Nav.Link
-                className="text-decoration-none text-dark d-flex align-items-center"
-                as={Link}
-                to="/login"
-              >
-                <PersonFill size={24} />
+              <Nav.Link className="text-decoration-none text-dark d-flex align-items-center">
+                <Dropdown align="end">
+                  <Dropdown.Toggle variant="link" id="dropdown-basic">
+                    <PersonFill size={24} style={{color:"black"}} />
+                  </Dropdown.Toggle>
+
+                  <Dropdown.Menu>
+                    {loggedInEmail ? (
+                      <>
+                      <Dropdown.Item>{loggedInEmail}</Dropdown.Item>
+                      <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
+                      </>
+                    ) : (
+                      <Dropdown.Item as={Link} to="/login">
+                        Login
+                      </Dropdown.Item>
+                    )}
+                  </Dropdown.Menu>
+                </Dropdown>
               </Nav.Link>
               <Nav.Link className="text-decoration-none text-dark d-flex align-items-center">
                 <BoxArrowRight size={24} onClick={handleLogout} />

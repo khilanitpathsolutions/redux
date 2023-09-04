@@ -60,7 +60,7 @@ const RegistrationPage = () => {
     <>
       {showAlert && (
         <Alert variant="danger" onClose={() => setShowAlert(false)} dismissible>
-          Registration Failed
+          Registration Failed !! Email id is already used
         </Alert>
       )}
       <Container className="d-flex justify-content-center align-items-center vh-100">
