@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import './index.css'
 import Routing from './routes'
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -7,11 +7,13 @@ import { CartProvider } from './utils/cartContext';
 
 const App = () => {
   return (
+    <Suspense fallback={<div>Loading ...</div>}>
     <WishlistProvider>
       <CartProvider>
         <Routing />
       </CartProvider>
     </WishlistProvider>
+    </Suspense>
   );
 }
 

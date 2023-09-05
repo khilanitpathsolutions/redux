@@ -1,43 +1,31 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import Home from "../container/home";
-import Cart from "../container/cart";
-import WishList from "../container/wishList";
-import LoginPage from "../container/login";
 import ProtectedRoute from "../utils/protectedRoutes";
-import RegistrationPage from "../container/registration";
 import PublicRoutes from "../utils/publicRoutes";
 import ErrorPage from "../container/error";
-import Product from "../container/product";
-import AddProduct from "../container/addProduct";
+import useRoutes from "../hooks/useRoutes";
 
 const Routing = () => {
+  const { privateRoutes, publicRoutes, authRoutes } = useRoutes();
+
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        {authRoutes(true).map((route) => (
+          <Route key={route.id} path={route.path} element={<PublicRoutes />}>
+            <Route index element={route.element} />
+          </Route>
+        ))}
 
-        <Route path="/login/*" element={<PublicRoutes />}>
-          <Route index element={<LoginPage />} />
-        </Route>
+        {privateRoutes(true).map((route) => (
+          <Route key={route.id} path={route.path} element={<ProtectedRoute />}>
+            <Route index element={route.element} />
+          </Route>
+        ))}
 
-        <Route path="/register/*" element={<PublicRoutes />}>
-          <Route index element={<RegistrationPage />} />
-        </Route>
-
-        <Route path="/cart/*" element={<ProtectedRoute />}>
-          <Route index element={<Cart />} />
-        </Route>
-        
-        <Route path="/wishlist/*" element={<ProtectedRoute />}>
-          <Route index element={<WishList />} />
-        </Route>
-        
-        <Route path="/addproduct/*" element={<ProtectedRoute />}>
-          <Route index element={<AddProduct />} />
-        </Route>
-
-        <Route path="/product/:item_id" element={<Product />} />
+        {publicRoutes(true).map((route) => (
+          <Route key={route.id} path={route.path} element={route.element} />
+        ))}
 
         <Route path="*" element={<ErrorPage />} />
       </Routes>
