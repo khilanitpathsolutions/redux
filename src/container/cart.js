@@ -4,6 +4,8 @@ import NavbarComponent from "../components/navbar";
 import CustomModal from "../components/modal";
 import { removeFromCartInFirestore, updateQuantityInFirestore } from "../services/firebase";
 import { useCart } from "../utils/cartContext";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 const Cart = () => {
   const [modalData, setModalData] = useState({
@@ -92,9 +94,10 @@ const Cart = () => {
                           justifyContent: "center"
                         }}
                       >
-                        <Card.Img
+                        <LazyLoadImage
                           src={item.image}
                           alt="error"
+                          effect="blur"
                           style={{
                             width: "150px",
                             height: "150px",

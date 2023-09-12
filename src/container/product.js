@@ -10,6 +10,8 @@ import useToggleWishlist from "../hooks/useToggleWishlist";
 import { addToCartInFirestore, auth } from "../services/firebase";
 import { useWishlist } from "../utils/wishlistContext";
 import { useCart } from "../utils/cartContext";
+import 'react-lazy-load-image-component/src/effects/blur.css';
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 const Product = () => {
   const { item_id } = useParams();
@@ -64,9 +66,10 @@ const Product = () => {
           />
           <Row>
             <Col md={4}>
-              <Card.Img
+              <LazyLoadImage
                 src={product.image}
                 alt={product.title}
+                effect= "blur"
                 style={{
                   width: "100%",
                   maxWidth: "350px",

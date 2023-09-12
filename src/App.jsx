@@ -4,9 +4,13 @@ import Routing from './routes'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { WishlistProvider } from './utils/wishlistContext';
 import { CartProvider } from './utils/cartContext';
+import { HelmetProvider } from 'react-helmet-async';
+
+const helmetContext = {};
 
 const App = () => {
   return (
+    <HelmetProvider context={helmetContext}>
     <Suspense fallback={<div>Loading ...</div>}>
     <WishlistProvider>
       <CartProvider>
@@ -14,6 +18,7 @@ const App = () => {
       </CartProvider>
     </WishlistProvider>
     </Suspense>
+    </HelmetProvider>
   );
 }
 

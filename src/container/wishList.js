@@ -5,6 +5,8 @@ import WishlistIcon from "../components/wishlistIcon";
 import useToggleWishlist from "../hooks/useToggleWishlist";
 import { useWishlist } from "../utils/wishlistContext";
 import { auth } from "../services/firebase";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import 'react-lazy-load-image-component/src/effects/blur.css';
 
 const WishList = () => {
   const { wishlistItems, fetchWishlistItems } = useWishlist();
@@ -73,9 +75,10 @@ const WishList = () => {
                           justifyContent: "center",
                         }}
                       >
-                        <Card.Img
+                        <LazyLoadImage
                           src={item.image}
                           alt="error"
+                          effect="blur"
                           style={{
                             width: "150px",
                             height: "150px",
