@@ -3,7 +3,7 @@ import { Badge, Container, Dropdown, Nav, Navbar } from "react-bootstrap";
 import { Cart, Heart, BoxArrowRight, PersonFill } from "react-bootstrap-icons";
 import { useSelector, useDispatch } from "react-redux";
 import logo from "../assets/redux.svg";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../store/reducers/userSlice";
 import CustomModal from "./modal";
 import { auth } from "../services/firebase";
@@ -15,9 +15,8 @@ const NavbarComponent = () => {
   const dispatch = useDispatch();
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const { wishlistItems } = useWishlist();
-
   const { cartItems, user, fetchCartItems } = useCart();
-
+  const navigate = useNavigate()
   useEffect(() => {
     if (user) {
       fetchCartItems();
@@ -28,6 +27,10 @@ const NavbarComponent = () => {
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
+
+  const handleProfile = () =>{
+    navigate("/profile")
+  }
 
   const handleSignOut = async () => {
     try {
@@ -76,7 +79,7 @@ const NavbarComponent = () => {
               }}
             >
               <h5 style={{ fontFamily: "cursive" }}>
-                {loggedInEmail ? `LoggedInUser: ${loggedInEmail}` : ""}
+                {loggedInEmail ? `User: ${loggedInEmail}` : ""}
               </h5>
             </div>
             <Nav className="d-flex align-items-center">
@@ -127,14 +130,17 @@ const NavbarComponent = () => {
               <Nav.Link className="text-decoration-none text-dark d-flex align-items-center">
                 <Dropdown align="end">
                   <Dropdown.Toggle variant="link" id="dropdown-basic">
-                    <PersonFill size={24} style={{color:"black"}} />
+                    <PersonFill size={24} style={{ color: "black" }} />
                   </Dropdown.Toggle>
 
                   <Dropdown.Menu>
                     {loggedInEmail ? (
                       <>
-                      <Dropdown.Item>{loggedInEmail}</Dropdown.Item>
-                      <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
+                        <Dropdown.Item onClick={handleProfile}>Profile</Dropdown.Item>
+                        {/* <Dropdown.Item>{loggedInEmail}</Dropdown.Item> */}
+                        <Dropdown.Item onClick={handleLogout}>
+                          Logout
+                        </Dropdown.Item>
                       </>
                     ) : (
                       <Dropdown.Item as={Link} to="/login">

@@ -1,4 +1,5 @@
 import { lazy, useMemo } from 'react';
+import Profile from '../container/profile';
 const LoginPage = lazy(() => import ('../container/login'));
 const Home = lazy(() => import ('../container/home'));
 const Cart = lazy(() => import ('../container/cart'));
@@ -31,6 +32,12 @@ const useRoutes = () => {
       id: 'wishlist',
       path: '/wishlist',
       element: <WishList />,
+      isPrivate: true
+    },
+    {
+      id: 'profile',
+      path: '/profile',
+      element: <Profile />,
       isPrivate: true
     },
     {

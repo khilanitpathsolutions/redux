@@ -36,20 +36,24 @@ const signInWithGoogle = async () => {
     const res = await signInWithPopup(auth, googleProvider);
     console.log(res);
 
-    if (res.user.email) {
-      const email = res.user.email;
-      const userRef = doc(firestore, "users", res.user.uid);
+    if (res.user) {
+      const { email, displayName, photoURL, phoneNumber, uid } = res.user;
+      const userRef = doc(firestore, "users", uid);
       const userSnapshot = await getDoc(userRef);
 
       if (!userSnapshot.exists()) {
         await setDoc(userRef, {
-          email: email
+          uid: uid,
+          email: email,
+          displayName: displayName,
+          photoURL: photoURL,
+          phoneNumber: phoneNumber,
         });
       }
 
       return res;
     } else {
-      console.log("Failed to get user email from Google response.");
+      console.log("Failed to get user information from Google response.");
       return null;
     }
   } catch (error) {
@@ -65,12 +69,17 @@ const signInWithEmailAndPasswordLocal = async (email, password) => {
       password
     );
 
-    const userRef = doc(firestore, "users", userCredential.user.uid);
+    const { email: userEmail, displayName, photoURL, phoneNumber, uid } = userCredential.user;
+    const userRef = doc(firestore, "users", uid);
     const userSnapshot = await getDoc(userRef);
 
     if (!userSnapshot.exists()) {
       await setDoc(userRef, {
-        email: userCredential.user.email
+        uid: uid,
+        email: userEmail,
+        displayName: displayName,
+        photoURL: photoURL,
+        phoneNumber: phoneNumber,
       });
     }
 
