@@ -1,18 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithEmailAndPassword,
-  signInWithPopup
-} from "firebase/auth";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  collection
-} from "firebase/firestore";
+import {getAuth,GoogleAuthProvider,signInWithEmailAndPassword,signInWithPopup,} from "firebase/auth";
+import {getFirestore,doc,setDoc,getDoc,collection,} from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyABCaFjpMD_sjYbO3Rol4twEWbgvzlifMc",
@@ -21,13 +11,14 @@ const firebaseConfig = {
   storageBucket: "redux-demo-b6443.appspot.com",
   messagingSenderId: "107044157191",
   appId: "1:107044157191:web:0b81456de8ee1600eeb7a2",
-  measurementId: "G-12C43E9FX7"
+  measurementId: "G-12C43E9FX7",
 };
 
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth = getAuth(app);
 const firestore = getFirestore(app);
+const storage = getStorage(app);
 
 const googleProvider = new GoogleAuthProvider();
 
@@ -69,7 +60,13 @@ const signInWithEmailAndPasswordLocal = async (email, password) => {
       password
     );
 
-    const { email: userEmail, displayName, photoURL, phoneNumber, uid } = userCredential.user;
+    const {
+      email: userEmail,
+      displayName,
+      photoURL,
+      phoneNumber,
+      uid,
+    } = userCredential.user;
     const userRef = doc(firestore, "users", uid);
     const userSnapshot = await getDoc(userRef);
 
@@ -105,7 +102,7 @@ const addToCartInFirestore = async (uid, item) => {
           itemUpdated = true;
           return {
             ...existingItem,
-            quantity: existingItem.quantity + 1
+            quantity: existingItem.quantity + 1,
           };
         }
         return existingItem;
@@ -116,12 +113,12 @@ const addToCartInFirestore = async (uid, item) => {
       }
 
       const updatedCart = {
-        items: updatedItems
+        items: updatedItems,
       };
       await setDoc(cartRef, updatedCart);
     } else {
       const newCart = {
-        items: [{ ...item, quantity: 1 }]
+        items: [{ ...item, quantity: 1 }],
       };
       await setDoc(cartRef, newCart);
     }
@@ -177,12 +174,12 @@ const addToWishlistInFirestore = async (uid, item) => {
     if (wishlistSnapshot.exists()) {
       const wishlistData = wishlistSnapshot.data();
       const updatedWishlist = {
-        items: [...wishlistData.items, item]
+        items: [...wishlistData.items, item],
       };
       await setDoc(wishlistRef, updatedWishlist);
     } else {
       const newWishlist = {
-        items: [item]
+        items: [item],
       };
       await setDoc(wishlistRef, newWishlist);
     }
@@ -245,6 +242,20 @@ const fetchWishlistItemsFromFirestore = async (uid) => {
   }
 };
 
+const uploadProfilePhoto = async (uid, file) => {
+  try {
+    const storageRef = ref(storage, `profile-photos/${uid}`);
+    await uploadBytes(storageRef, file);
+
+    const downloadURL = await getDownloadURL(storageRef);
+    console.log("Downloaded photo URL:", downloadURL);
+    return downloadURL;
+  } catch (error) {
+    console.error("Error uploading profile photo:", error);
+    throw error;
+  }
+};
+
 export {
   app,
   analytics,
@@ -258,5 +269,6 @@ export {
   removeFromWishlistInFirestore,
   fetchCartItemsFromFirestore,
   fetchWishlistItemsFromFirestore,
-  firestore
+  uploadProfilePhoto,
+  firestore,
 };
