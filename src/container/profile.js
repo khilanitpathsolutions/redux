@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {Card,Button,Form,Container,Row,Col,ListGroup,} from "react-bootstrap";
-import { getAuth } from "firebase/auth";
+import {Card,Button,Form,Container,Row,Col,ListGroup,Spinner,} from "react-bootstrap";
+import { getAuth, updatePassword } from "firebase/auth";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import altImage from "../assets/profile.png";
 import NavbarComponent from "../components/navbar";
@@ -9,6 +9,8 @@ import { uploadProfilePhoto } from "../services/firebase";
 const Profile = () => {
   const auth = getAuth();
   const db = getFirestore();
+  const user = auth.currentUser;
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     displayName: "",
     email: auth.currentUser?.email || "",
@@ -19,7 +21,7 @@ const Profile = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const [selectedMenuItem, setSelectedMenuItem] = useState("profile");
+  const [selectedMenuItem,setSelectedMenuItem] = useState("profile");
 
   const fetchUserData = async () => {
     if (auth.currentUser) {
@@ -32,7 +34,7 @@ const Profile = () => {
             ...docSnap.data(),
           }));
         } else {
-          console.log("User document does not exist.");
+          console.log("User document does not exist");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -41,11 +43,13 @@ const Profile = () => {
   };
 
   useEffect(() => {
-  fetchUserData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[]);
+    fetchUserData();
+    console.log("useEffect running");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleProfileUpdate = async () => {
+    setLoading(true);
     const userDocRef = doc(db, "users", auth.currentUser.uid);
 
     try {
@@ -70,9 +74,11 @@ const Profile = () => {
       await updateDoc(userDocRef, updatedData);
 
       alert("Profile updated successfully");
-      console.log("Profile updated successfully.");
+      console.log("Profile updated successfully");
+      setLoading(false);
+      fetchUserData();
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error updating profile", error);
     }
   };
 
@@ -93,15 +99,27 @@ const Profile = () => {
   };
 
   const handlePasswordChange = async () => {
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert("New Password and Confirm Password do not match.");
+    setLoading(true)
+    const newPassword = passwordData.newPassword;
+    if (newPassword !== passwordData.confirmPassword) {
+      alert("New Password and Confirm Password do not match");
       return;
     }
+  
     try {
+      await updatePassword(user, newPassword);
+      alert("Password updated successfully");
+      setPasswordData({
+        newPassword: '',
+        confirmPassword: '',
+      });
+      setLoading(false)
     } catch (error) {
-      console.error("Error changing password:", error);
+      console.log("Error changing password", error);
+      alert("Error changing password: " + error.message);
     }
   };
+  
 
   if (!auth.currentUser) {
     return <div>Loading...</div>;
@@ -184,7 +202,7 @@ const Profile = () => {
                     <Form.Group>
                       <Form.Label>Phone Number:</Form.Label>
                       <Form.Control
-                        type="text"
+                        type="number"
                         name="phoneNumber"
                         value={formData.phoneNumber || ""}
                         onChange={handleInputChange}
@@ -200,8 +218,18 @@ const Profile = () => {
                       />
                     </Form.Group>
                     <div className="text-center mt-3">
-                      <Button variant="primary" onClick={handleProfileUpdate}>
-                        Save Profile
+                      <Button
+                        variant="primary"
+                        onClick={handleProfileUpdate}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Spinner animation="border" size="sm" />Updating...
+                          </>
+                        ) : (
+                          "Save Profile"
+                        )}
                       </Button>
                     </div>
                   </Form>
@@ -227,8 +255,18 @@ const Profile = () => {
                       />
                     </Form.Group>
                     <div className="text-center mt-3">
-                      <Button variant="primary" onClick={handlePasswordChange}>
-                        Save Changes
+                    <Button
+                        variant="primary"
+                        onClick={handlePasswordChange}
+                        disabled={loading}
+                      >
+                        {loading ? (
+                          <>
+                            <Spinner animation="border" size="sm" />Updating...
+                          </>
+                        ) : (
+                          "Update Password"
+                        )}
                       </Button>
                     </div>
                   </div>
