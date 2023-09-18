@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {Card,Button,Form,Container,Row,Col,ListGroup,Spinner,} from "react-bootstrap";
+import { Card, Button, Form, Container, Row, Col, ListGroup, Spinner } from "react-bootstrap";
 import { getAuth, updatePassword } from "firebase/auth";
 import { getFirestore, doc, getDoc, updateDoc } from "firebase/firestore";
 import altImage from "../assets/profile.png";
@@ -21,7 +21,9 @@ const Profile = () => {
     newPassword: "",
     confirmPassword: "",
   });
-  const [selectedMenuItem,setSelectedMenuItem] = useState("profile");
+  const [selectedMenuItem, setSelectedMenuItem] = useState("profile");
+  const [selectedProfilePhoto, setSelectedProfilePhoto] = useState(formData.photoURL || altImage);
+  const [newProfilePhoto, setNewProfilePhoto] = useState(null);
 
   const fetchUserData = async () => {
     if (auth.currentUser) {
@@ -29,10 +31,12 @@ const Profile = () => {
       try {
         const docSnap = await getDoc(userDocRef);
         if (docSnap.exists()) {
+          const userData = docSnap.data();
           setFormData((prevData) => ({
             ...prevData,
-            ...docSnap.data(),
+            ...userData,
           }));
+          setSelectedProfilePhoto(userData.photoURL || altImage);
         } else {
           console.log("User document does not exist");
         }
@@ -45,9 +49,39 @@ const Profile = () => {
   useEffect(() => {
     fetchUserData();
     console.log("useEffect running");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  const handleProfilePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setSelectedProfilePhoto(reader.result);
+        setNewProfilePhoto(file);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const fileInputRef = React.createRef(); 
+
+  const handleCancelPhotoChange = () => {
+    setSelectedProfilePhoto(formData.photoURL || altImage);
+    setNewProfilePhoto(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
   const handleProfileUpdate = async () => {
     setLoading(true);
     const userDocRef = doc(db, "users", auth.currentUser.uid);
@@ -55,10 +89,10 @@ const Profile = () => {
     try {
       let newPhotoURL = formData.photoURL;
 
-      if (formData.newProfilePhoto) {
+      if (newProfilePhoto) {
         const downloadURL = await uploadProfilePhoto(
           auth.currentUser.uid,
-          formData.newProfilePhoto
+          newProfilePhoto
         );
         newPhotoURL = downloadURL;
       }
@@ -77,17 +111,11 @@ const Profile = () => {
       console.log("Profile updated successfully");
       setLoading(false);
       fetchUserData();
+      setSelectedProfilePhoto(newPhotoURL);
+      setNewProfilePhoto(null);
     } catch (error) {
       console.error("Error updating profile", error);
     }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
   };
 
   const handlePasswordInputChange = (e) => {
@@ -99,13 +127,13 @@ const Profile = () => {
   };
 
   const handlePasswordChange = async () => {
-    setLoading(true)
+    setLoading(true);
     const newPassword = passwordData.newPassword;
     if (newPassword !== passwordData.confirmPassword) {
       alert("New Password and Confirm Password do not match");
       return;
     }
-  
+
     try {
       await updatePassword(user, newPassword);
       alert("Password updated successfully");
@@ -113,22 +141,17 @@ const Profile = () => {
         newPassword: '',
         confirmPassword: '',
       });
-      setLoading(false)
+      setLoading(false);
     } catch (error) {
       console.log("Error changing password", error);
       alert("Error changing password: " + error.message);
     }
   };
-  
-
-  if (!auth.currentUser) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div>
       <NavbarComponent />
-      <br></br>
+      <br />
       <Container>
         <Row>
           <Col md={3}>
@@ -154,7 +177,7 @@ const Profile = () => {
               <Card.Body>
                 <div className="text-center">
                   <img
-                    src={formData.photoURL || altImage}
+                    src={selectedProfilePhoto}
                     alt="Profile"
                     fluid
                     rounded
@@ -172,15 +195,20 @@ const Profile = () => {
                         type="file"
                         name="newProfilePhoto"
                         accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files[0];
-                          setFormData((prevData) => ({
-                            ...prevData,
-                            newProfilePhoto: file,
-                          }));
-                        }}
+                        onChange={handleProfilePhotoChange}
+                        ref={fileInputRef}
                       />
                     </Form.Group>
+                    {newProfilePhoto && (
+                      <div className="text-center mt-2">
+                        <Button
+                          variant="danger"
+                          onClick={handleCancelPhotoChange}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
                     <Form.Group>
                       <Form.Label>Name:</Form.Label>
                       <Form.Control
@@ -225,7 +253,7 @@ const Profile = () => {
                       >
                         {loading ? (
                           <>
-                            <Spinner animation="border" size="sm" />Updating...
+                            <Spinner animation="border" size="sm" /> Updating...
                           </>
                         ) : (
                           "Save Profile"
@@ -255,14 +283,14 @@ const Profile = () => {
                       />
                     </Form.Group>
                     <div className="text-center mt-3">
-                    <Button
+                      <Button
                         variant="primary"
                         onClick={handlePasswordChange}
                         disabled={loading}
                       >
                         {loading ? (
                           <>
-                            <Spinner animation="border" size="sm" />Updating...
+                            <Spinner animation="border" size="sm" /> Updating...
                           </>
                         ) : (
                           "Update Password"
