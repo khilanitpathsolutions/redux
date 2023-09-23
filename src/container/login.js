@@ -5,10 +5,7 @@ import { login } from "../store/reducers/userSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { validationSchemaLogin } from "../utils/validation";
-import {
-  signInWithEmailAndPassword,
-  signInWithGoogle,
-} from "../services/firebase";
+import {signInWithEmailAndPassword,signInWithGoogle} from "../services/firebase";
 import { Google } from "react-bootstrap-icons";
 
 const LoginPage = () => {

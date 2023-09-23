@@ -1,18 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Container, Row, Col, Button, Card } from "react-bootstrap";
+import { Container, Row, Col, Button, Card, Spinner } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import CustomModal from "../components/modal";
 import { removeFromCartInFirestore, updateQuantityInFirestore } from "../services/firebase";
 import { useCart } from "../utils/cartContext";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import 'react-lazy-load-image-component/src/effects/blur.css';
+import { useNavigate } from "react-router-dom";
+
 
 const Cart = () => {
   const [modalData, setModalData] = useState({
     showConfirmModal: false,
     itemToRemove: null
   });
+  const [loading,setLoading] = useState(false)
   const {cartItems,user,fetchCartItems} = useCart()
+  const navigate = useNavigate()
   useEffect(() => {
     if (user) {
       fetchCartItems();
@@ -44,6 +48,7 @@ const Cart = () => {
     }
   };
 
+
   const handleRemove = (itemId) => {
     removeFromCartInFirestore(user.uid, itemId)
       .then(() => {
@@ -64,6 +69,14 @@ const Cart = () => {
     return taxes;
   }, [calculateSubTotal]);
 
+  const checkout = () => {
+    setLoading(true);
+     setTimeout(() => {
+      setLoading(false);
+      navigate('/checkout');
+    }, 3000);
+  }
+  
   return (
     <>
       <NavbarComponent cartItem={cartItems} />
@@ -166,7 +179,22 @@ const Cart = () => {
               <h2>
                 Total Amount: ₹
                 {Number(calculateSubTotal + calculateTaxes).toFixed(1)}
-              </h2>
+              </h2><br></br>
+              <Button
+                variant="success"
+                type="submit"
+                disabled={loading}
+                onClick={checkout}
+              >
+                {loading ? (
+                  <>
+                    <Spinner animation="border" size="sm" /> Checking Out...
+                  </>
+                ) : (
+                  "CheckOut"
+                )}
+              </Button>
+              <br></br>
             </div>
           </>
         )}

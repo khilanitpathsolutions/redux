@@ -1,5 +1,6 @@
 import { lazy, useMemo } from 'react';
 import Profile from '../container/profile';
+import Checkout from '../container/checkout';
 const LoginPage = lazy(() => import ('../container/login'));
 const Home = lazy(() => import ('../container/home'));
 const Cart = lazy(() => import ('../container/cart'));
@@ -26,6 +27,12 @@ const useRoutes = () => {
       id: 'cart',
       path: '/cart',
       element: <Cart />,
+      isPrivate: true
+    },
+    {
+      id: 'checkout',
+      path: '/checkout',
+      element: <Checkout />,
       isPrivate: true
     },
     {
