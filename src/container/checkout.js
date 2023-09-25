@@ -7,10 +7,12 @@ import gpay from "../assets/gpay.svg";
 import paytm from "../assets/Paytm.svg";
 import phonepe from "../assets/phonepe.svg";
 import upi from "../assets/upi.svg";
+import { useNavigate } from "react-router-dom";
+import { addOrderToFirestore } from "../services/firebase";
 
 const Checkout = () => {
   const { cartItems, user, fetchCartItems } = useCart();
-  console.log(cartItems);
+
   useEffect(() => {
     if (user) {
       fetchCartItems();
@@ -20,9 +22,77 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("Card");
   const [loading, setLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+  const navigate = useNavigate();
+
+  const [shippingAddress, setShippingAddress] = useState({
+    name: "",
+    address: "",
+    city: "",
+    state: "",
+    phoneNumber: "",
+  });
+
+ const [orderData, setOrderData] = useState({
+    paymentMethod: {
+      card: {
+        cardHolderName: "",
+        cardNumber: "",
+        expiryDate: "",
+        cvv: "",
+      },
+      upi: "",
+    },
+  });
+
 
   const handleRadioChange = (event) => {
     setSelectedOption(event.target.value);
+  };
+
+  const handleShippingInputChange = (e) => {
+    const { name, value } = e.target;
+    setShippingAddress((prevAddress) => ({
+      ...prevAddress,
+      [name]: value,
+    }));
+  };
+
+  const handlePaymentInputChange = (e) => {
+    const { name, value } = e.target;
+    setOrderData((prevData) => ({
+      ...prevData,
+      paymentMethod: {
+        card: {
+          ...prevData.paymentMethod.card,
+          [name]: value,
+        },
+      },
+    }));
+  };
+  
+    const handleSubmit = async () => {
+    setLoading(true);
+    const order = {
+      userId: user.uid,
+      shippingAddress: shippingAddress,
+      paymentMethod:
+        paymentMethod === "Card" ? orderData.paymentMethod.card : "UPI",
+      items: cartItems,
+      subTotal: calculateSubTotal.toFixed(1),
+      taxes: calculateTaxes.toFixed(1),
+      totalAmount: Number(calculateSubTotal + calculateTaxes).toFixed(1),
+    };
+    try {
+      await addOrderToFirestore(user.uid, order);
+      //setLoading(false);
+      setTimeout(()=>{
+        setLoading(true)
+        navigate("/orderConfirm");
+        },2000)
+    } catch (error) {
+      console.error("Error adding order: ", error);
+      setLoading(false);
+    }
   };
 
   const calculateSubTotal = useMemo(() => {
@@ -35,13 +105,6 @@ const Checkout = () => {
     return taxes;
   }, [calculateSubTotal]);
 
-  const checkout = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 5000);
-  };
-
   return (
     <>
       <NavbarComponent />
@@ -53,29 +116,51 @@ const Checkout = () => {
             <Form>
               <Form.Group controlId="formBasicName">
                 <Form.Label>Name</Form.Label>
-                <Form.Control type="text" placeholder="Enter your name" />
+                <Form.Control
+                  type="text"
+                  name="name"
+                  placeholder="Enter your name"
+                  onChange={handleShippingInputChange}
+                />
               </Form.Group>
 
               <Form.Group controlId="formBasicAddress">
                 <Form.Label>Address</Form.Label>
-                <Form.Control type="text" placeholder="Enter your address" />
+                <Form.Control
+                  type="text"
+                  name="address"
+                  placeholder="Enter your address"
+                  onChange={handleShippingInputChange}
+                />
               </Form.Group>
 
               <Form.Group controlId="formBasicCity">
                 <Form.Label>City</Form.Label>
-                <Form.Control type="text" placeholder="Enter your city" />
+                <Form.Control
+                  type="text"
+                  name="city"
+                  placeholder="Enter your city"
+                  onChange={handleShippingInputChange}
+                />
               </Form.Group>
 
               <Form.Group controlId="formBasicState">
                 <Form.Label>State</Form.Label>
-                <Form.Control type="text" placeholder="Enter your State" />
+                <Form.Control
+                  type="text"
+                  name="state"
+                  placeholder="Enter your State"
+                  onChange={handleShippingInputChange}
+                />
               </Form.Group>
 
               <Form.Group controlId="formBasicNumber">
                 <Form.Label>Phone Number</Form.Label>
                 <Form.Control
                   type="number"
+                  name="phoneNumber"
                   placeholder="Enter your phone number"
+                  onChange={handleShippingInputChange}
                 />
               </Form.Group>
             </Form>
@@ -109,15 +194,19 @@ const Checkout = () => {
                       <Form.Label>Card-Holder Name</Form.Label>
                       <Form.Control
                         type="text"
+                        name="cardHolderName"
                         placeholder="Enter the Card-Holder Name"
+                        onChange={handlePaymentInputChange}
                       />
                     </Form.Group>
 
                     <Form.Group controlId="formBasicCardNumber">
                       <Form.Label>Card Number</Form.Label>
                       <Form.Control
+                        name="cardNumber"
                         type="number"
                         placeholder="Enter your card number"
+                        onChange={handlePaymentInputChange}
                       />
                     </Form.Group>
 
@@ -127,11 +216,11 @@ const Checkout = () => {
                     >
                       <div style={{ width: "60%" }}>
                         <Form.Label>Expiry Date</Form.Label>
-                        <Form.Control type="Date" placeholder="MM/YY" />
+                        <Form.Control name="expiryDate" type="Date" placeholder="MM/YY" onChange={handlePaymentInputChange}/>
                       </div>
                       <div>
                         <Form.Label>CVV</Form.Label>
-                        <Form.Control type="number" placeholder="Enter CVV" />
+                        <Form.Control name="cvv" type="number" placeholder="Enter CVV" onChange={handlePaymentInputChange} />
                       </div>
                     </Form.Group>
                   </div>
@@ -211,7 +300,7 @@ const Checkout = () => {
                   variant="warning"
                   type="submit"
                   disabled={loading}
-                  onClick={checkout}
+                  onClick={handleSubmit}
                 >
                   {loading ? (
                     <>

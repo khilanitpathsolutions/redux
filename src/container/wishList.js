@@ -34,9 +34,7 @@ const WishList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
-  
-
-  return (
+   return (
     <>
       <NavbarComponent />
       <Container>
