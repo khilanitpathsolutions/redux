@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth,GoogleAuthProvider,signInWithEmailAndPassword,signInWithPopup,} from "firebase/auth";
-import {getFirestore,doc,setDoc,getDoc,collection, serverTimestamp,} from "firebase/firestore";
+import {getFirestore,doc,setDoc,getDoc,collection, serverTimestamp, addDoc,} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
@@ -259,20 +259,21 @@ const uploadProfilePhoto = async (uid, file) => {
 const addOrderToFirestore = async (userId, orderData) => {
   try {
     const ordersCollection = collection(firestore, "orders");
-
-    const orderRef = doc(ordersCollection);
-    await setDoc(orderRef, {
+    const userDocRef = doc(ordersCollection, userId);
+    const userOrdersCollection = collection(userDocRef, "userOrders");
+    const orderRef = await addDoc(userOrdersCollection, {
       userId: userId,
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
       items: orderData.items,
       subTotal: orderData.subTotal,
       taxes: orderData.taxes,
+      discount: orderData.discount,
       totalAmount: orderData.totalAmount,
-      timestamp: serverTimestamp(), 
+      timestamp: serverTimestamp(),
     });
 
-    console.log("Order added successfully!");
+    console.log("Order added successfully with ID:", orderRef.id);
   } catch (error) {
     console.error("Error adding order to Firestore:", error);
     throw error;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { } from 'react';
 import success from '../assets/success.gif';
 import { House } from 'react-bootstrap-icons';
 import { Link } from 'react-router-dom';
@@ -10,12 +10,14 @@ const OrderSuccess = () => {
     alignItems: 'center',
     minHeight: '100vh',
     flexDirection: 'column',
+    backgroundColor: '#373b3e',
+    color: 'white',
   };
 
   const successImageStyle = {
     maxWidth: '100%',
     height: 'auto',
-    borderRadius: '50%',
+    borderRadius: '20%',
     marginTop: '20px',
   };
 

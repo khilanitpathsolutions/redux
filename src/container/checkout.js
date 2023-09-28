@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {Container,Row,Col,Form,Button,Card,Spinner,} from "react-bootstrap";
+import {Container,Row,Col,Form,Button,Card,Spinner,Toast,} from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { useCart } from "../utils/cartContext";
 import "../index.css";
@@ -18,12 +18,14 @@ const Checkout = () => {
       fetchCartItems();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  const [paymentMethod, setPaymentMethod] = useState("Card");
+  }, [user]);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
   const navigate = useNavigate();
-
   const [shippingAddress, setShippingAddress] = useState({
     name: "",
     address: "",
@@ -32,7 +34,7 @@ const Checkout = () => {
     phoneNumber: "",
   });
 
- const [orderData, setOrderData] = useState({
+  const [orderData, setOrderData] = useState({
     paymentMethod: {
       card: {
         cardHolderName: "",
@@ -44,9 +46,39 @@ const Checkout = () => {
     },
   });
 
+  const [validationErrors, setValidationErrors] = useState({
+    cardHolderName: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
+    name: "",
+    address: "",
+    city: "",
+    state: "",
+    phoneNumber: "",
+  });
+  const showSuccess = () => {
+    setShowSuccessToast(true);
+  };
+
+  const showError = () => {
+    setShowErrorToast(true);
+  };
+
+  const hideSuccess = () => {
+    setShowSuccessToast(false);
+  };
+
+  const hideError = () => {
+    setShowErrorToast(false);
+  };
 
   const handleRadioChange = (event) => {
     setSelectedOption(event.target.value);
+  };
+
+  const handleCouponCodeChange = (e) => {
+    setCouponCode(e.target.value);
   };
 
   const handleShippingInputChange = (e) => {
@@ -55,9 +87,21 @@ const Checkout = () => {
       ...prevAddress,
       [name]: value,
     }));
+    const isValid = !!value;
+    if (name === "phoneNumber" && value.length !== 10) {
+      setValidationErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: "Mobile number must be 10 digits.",
+      }));
+    } else {
+      setValidationErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: isValid ? "" : `${name} is required.`,
+      }));
+    }
   };
 
-  const handlePaymentInputChange = (e) => {
+  const handleCardInputChange = (e) => {
     const { name, value } = e.target;
     setOrderData((prevData) => ({
       ...prevData,
@@ -68,30 +112,109 @@ const Checkout = () => {
         },
       },
     }));
+    const isValid = validateCardDetails(name, value);
+    setValidationErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: isValid ? "" : `Invalid ${name}.`,
+    }));
   };
-  
-    const handleSubmit = async () => {
-    setLoading(true);
-    const order = {
-      userId: user.uid,
-      shippingAddress: shippingAddress,
-      paymentMethod:
-        paymentMethod === "Card" ? orderData.paymentMethod.card : "UPI",
-      items: cartItems,
-      subTotal: calculateSubTotal.toFixed(1),
-      taxes: calculateTaxes.toFixed(1),
-      totalAmount: Number(calculateSubTotal + calculateTaxes).toFixed(1),
-    };
-    try {
-      await addOrderToFirestore(user.uid, order);
-      //setLoading(false);
-      setTimeout(()=>{
-        setLoading(true)
+
+  const validateCardDetails = (name, value) => {
+    if (name === "cardHolderName") {
+      return !!value;
+    } else if (name === "cardNumber") {
+      return /^\d{16}$/.test(value);
+    } else if (name === "cvv") {
+      return /^\d{3}$/.test(value);
+    } else if (name === "expiryDate") {
+      return !!value;
+    }
+    return true;
+  };
+
+  const validateShippingAddress = () => {
+    const errors = {};
+    const requiredFields = ["name", "address", "city", "state", "phoneNumber"];
+    requiredFields.forEach((field) => {
+      if (!shippingAddress[field]) {
+        errors[field] = `${field} is required.`;
+      }
+    });
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const isCardValid =
+      paymentMethod === "Card"
+        ? validateCardDetails(
+            "cardHolderName",
+            orderData.paymentMethod.card.cardHolderName
+          ) &&
+          validateCardDetails(
+            "cardNumber",
+            orderData.paymentMethod.card.cardNumber
+          ) &&
+          validateCardDetails(
+            "expiryDate",
+            orderData.paymentMethod.card.expiryDate
+          ) &&
+          validateCardDetails("cvv", orderData.paymentMethod.card.cvv)
+        : true;
+
+    const isShippingValid = validateShippingAddress();
+
+    if (!paymentMethod) {
+      return;
+    }
+
+    if (isCardValid && isShippingValid) {
+      setLoading(true);
+
+      const order = {
+        userId: user.uid,
+        shippingAddress: shippingAddress,
+        paymentMethod:
+          paymentMethod === "Card" ? orderData.paymentMethod.card : "UPI",
+        items: cartItems,
+        subTotal: calculateSubTotal.toFixed(1),
+        taxes: calculateTaxes.toFixed(1),
+        discount: Number(
+          (calculateSubTotal + calculateTaxes) * discountPercentage
+        ).toFixed(1),
+        totalAmount: Number(
+          (calculateSubTotal + calculateTaxes) * (1 - discountPercentage)
+        ).toFixed(1),
+      };
+
+      try {
+        await addOrderToFirestore(user.uid, order);
+        setLoading(false);
         navigate("/orderConfirm");
-        },2000)
-    } catch (error) {
-      console.error("Error adding order: ", error);
-      setLoading(false);
+      } catch (error) {
+        console.error("Error adding order: ", error);
+        setLoading(false);
+      }
+    }
+  };
+
+  const [couponCode, setCouponCode] = useState("");
+  const [discountPercentage, setDiscountPercentage] = useState(0);
+
+  const applyCouponCode = () => {
+    const couponCodes = {
+      sub50: 0.5,
+      sub25: 0.25,
+      sub10: 0.1,
+    };
+    if (couponCode in couponCodes) {
+      showSuccess(); 
+      setDiscountPercentage(couponCodes[couponCode]);
+    } else {
+      showError();
+      setDiscountPercentage(0);
     }
   };
 
@@ -122,6 +245,7 @@ const Checkout = () => {
                   placeholder="Enter your name"
                   onChange={handleShippingInputChange}
                 />
+                <div className="text-danger">{validationErrors.name}</div>
               </Form.Group>
 
               <Form.Group controlId="formBasicAddress">
@@ -132,6 +256,7 @@ const Checkout = () => {
                   placeholder="Enter your address"
                   onChange={handleShippingInputChange}
                 />
+                <div className="text-danger">{validationErrors.address}</div>
               </Form.Group>
 
               <Form.Group controlId="formBasicCity">
@@ -142,6 +267,7 @@ const Checkout = () => {
                   placeholder="Enter your city"
                   onChange={handleShippingInputChange}
                 />
+                <div className="text-danger">{validationErrors.city}</div>
               </Form.Group>
 
               <Form.Group controlId="formBasicState">
@@ -152,6 +278,7 @@ const Checkout = () => {
                   placeholder="Enter your State"
                   onChange={handleShippingInputChange}
                 />
+                <div className="text-danger">{validationErrors.state}</div>
               </Form.Group>
 
               <Form.Group controlId="formBasicNumber">
@@ -162,6 +289,9 @@ const Checkout = () => {
                   placeholder="Enter your phone number"
                   onChange={handleShippingInputChange}
                 />
+                <div className="text-danger">
+                  {validationErrors.phoneNumber}
+                </div>
               </Form.Group>
             </Form>
             <br></br>
@@ -196,8 +326,11 @@ const Checkout = () => {
                         type="text"
                         name="cardHolderName"
                         placeholder="Enter the Card-Holder Name"
-                        onChange={handlePaymentInputChange}
+                        onChange={handleCardInputChange}
                       />
+                      <div className="text-danger">
+                        {validationErrors.cardHolderName}
+                      </div>
                     </Form.Group>
 
                     <Form.Group controlId="formBasicCardNumber">
@@ -206,8 +339,11 @@ const Checkout = () => {
                         name="cardNumber"
                         type="number"
                         placeholder="Enter your card number"
-                        onChange={handlePaymentInputChange}
+                        onChange={handleCardInputChange}
                       />
+                      <div className="text-danger">
+                        {validationErrors.cardNumber}
+                      </div>
                     </Form.Group>
 
                     <Form.Group
@@ -216,11 +352,27 @@ const Checkout = () => {
                     >
                       <div style={{ width: "60%" }}>
                         <Form.Label>Expiry Date</Form.Label>
-                        <Form.Control name="expiryDate" type="Date" placeholder="MM/YY" onChange={handlePaymentInputChange}/>
+                        <Form.Control
+                          name="expiryDate"
+                          type="date"
+                          placeholder="MM/YY"
+                          onChange={handleCardInputChange}
+                        />
+                        <div className="text-danger">
+                          {validationErrors.expiryDate}
+                        </div>
                       </div>
                       <div>
                         <Form.Label>CVV</Form.Label>
-                        <Form.Control name="cvv" type="number" placeholder="Enter CVV" onChange={handlePaymentInputChange} />
+                        <Form.Control
+                          name="cvv"
+                          type="number"
+                          placeholder="Enter CVV"
+                          onChange={handleCardInputChange}
+                        />
+                        <div className="text-danger">
+                          {validationErrors.cvv}
+                        </div>
                       </div>
                     </Form.Group>
                   </div>
@@ -342,12 +494,17 @@ const Checkout = () => {
               className="d-flex"
               style={{
                 margin: "5px",
-                border: "2px solid #6ca98d",
-                borderRadius: "10px",
               }}
             >
-              <Form.Control type="text" placeholder="Coupon Code" />
-              <Button variant="primary">Apply</Button>
+              <Form.Control
+                type="text"
+                placeholder="Coupon Code"
+                value={couponCode}
+                onChange={handleCouponCodeChange}
+              />
+              <Button variant="dark" onClick={applyCouponCode}>
+                Apply
+              </Button>
             </div>
             <br></br>
             <div
@@ -357,6 +514,12 @@ const Checkout = () => {
               <h3>Cart-Total</h3>
               <h6>Sub Total: ₹{calculateSubTotal.toFixed(1)}</h6>
               <h6>Taxes: ₹{calculateTaxes.toFixed(1)}</h6>
+              <h6>
+                Discount: ₹
+                {Number(
+                  (calculateSubTotal + calculateTaxes) * discountPercentage
+                ).toFixed(1)}
+              </h6>
               <hr
                 style={{
                   border: "1px solid black",
@@ -366,13 +529,48 @@ const Checkout = () => {
               ></hr>
               <h2>
                 Total Amount: ₹
-                {Number(calculateSubTotal + calculateTaxes).toFixed(1)}
+                {Number(
+                  (calculateSubTotal + calculateTaxes) *
+                    (1 - discountPercentage)
+                ).toFixed(1)}
               </h2>
             </div>
             <br></br>
           </Col>
         </Row>
       </Container>
+
+      <Toast
+        show={showSuccessToast}
+        onClose={hideSuccess}
+        className="position-fixed top-0 end-0 m-4"
+        delay={3000}
+        style={{ zIndex: "9999" }}
+        autohide
+        bg="success"
+        text="white"
+      >
+        <Toast.Header closeButton={false}>
+          <strong className="me-auto">Success</strong>
+        </Toast.Header>
+        <Toast.Body>Coupon Code Applied Successfully</Toast.Body>
+      </Toast>
+
+      <Toast
+        show={showErrorToast}
+        onClose={hideError}
+        className="position-fixed top-0 end-0 m-4"
+        style={{ zIndex: "9999" }}
+        delay={3000}
+        autohide
+        bg="danger"
+        text="white"
+      >
+        <Toast.Header closeButton={false}>
+          <strong className="me-auto">Error</strong>
+        </Toast.Header>
+        <Toast.Body>Please Enter Valid Coupon Code</Toast.Body>
+      </Toast>
     </>
   );
 };
