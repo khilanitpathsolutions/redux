@@ -7,13 +7,13 @@ import NavbarComponent from '../components/navbar';
 const AddProduct = () => {
   const [productData, setProductData] = useState({
     title: '',
-    price: 0,
+    price: '',
     description: '',
     category: '',
     image: '',
     rating: {
-      rate: 0,
-      count: 0,
+      rate: '',
+      count: '',
     },
   });
 
@@ -25,15 +25,16 @@ const AddProduct = () => {
       console.log('Product added:', response.data);
       setProductData({
         title: '',
-        price: 0,
+        price: '',
         description: '',
         category: '',
         image: '',
         rating: {
-          rate: 0,
-          count: 0,
+          rate: '',
+          count: '',
         },
       });
+      alert("Product added successfully")
     } catch (error) {
       console.error('Error adding product:', error);
     }

@@ -14,6 +14,11 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
 
+  const isAdmin = (email) => {
+    const adminEmails = ["admin@gmail.com", "admin1@gmail.com"];
+    return adminEmails.includes(email);
+  };
+
   const formik = useFormik({
     initialValues: {
       email: "",
@@ -24,12 +29,11 @@ const LoginPage = () => {
       setLoading(true);
 
       try {
-        const res = await signInWithEmailAndPassword(
-          values.email,
-          values.password
-        );
+        const res = await signInWithEmailAndPassword(values.email, values.password);
         if (res && res.user) {
-          dispatch(login({ email: res.user.email }));
+          const email = res.user.email;
+          const userRole = isAdmin(email) ? "admin" : "user"; 
+          dispatch(login({ email, userRole }));
           navigate("/");
         } else {
           setShowAlert(true);
@@ -51,7 +55,8 @@ const LoginPage = () => {
         const email = res.user.email;
         console.log("Email from Google:", email);
         console.log("Dispatching login action...");
-        dispatch(login({ email }));
+        const userRole = isAdmin(email) ? "admin" : "user";
+        dispatch(login({ email,userRole }));
         navigate("/");
       } else {
         alert("Failed");
@@ -60,7 +65,6 @@ const LoginPage = () => {
       console.log(error.message);
     }
   };
-
   return (
     <>
       {showAlert && (
@@ -152,7 +156,7 @@ const LoginPage = () => {
               to="/register"
               className="d-block text-center mt-3 text-decoration-none"
             >
-              Not Registered? Click Here
+              Not Registered? Click Here  
             </Link>
           </form>
         </div>

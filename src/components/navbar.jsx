@@ -16,6 +16,8 @@ const NavbarComponent = () => {
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const { wishlistItems } = useWishlist();
   const { cartItems, user, fetchCartItems } = useCart();
+  const userRole = useSelector((state) => state.user.userRole);
+  const isAdmin = userRole === "admin";
   const navigate = useNavigate()
   useEffect(() => {
     if (user) {
@@ -30,6 +32,10 @@ const NavbarComponent = () => {
 
   const handleProfile = () =>{
     navigate("/profile")
+  }
+
+  const handleOrders = () =>{
+    navigate("/orders")
   }
 
   const handleSignOut = async () => {
@@ -137,10 +143,10 @@ const NavbarComponent = () => {
                     {loggedInEmail ? (
                       <>
                         <Dropdown.Item onClick={handleProfile}>Profile</Dropdown.Item>
-                        {/* <Dropdown.Item>{loggedInEmail}</Dropdown.Item> */}
-                        <Dropdown.Item onClick={handleLogout}>
-                          Logout
-                        </Dropdown.Item>
+                        {isAdmin && (
+                          <Dropdown.Item onClick={handleOrders}>Orders</Dropdown.Item>
+                        )}
+                        <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
                       </>
                     ) : (
                       <Dropdown.Item as={Link} to="/login">

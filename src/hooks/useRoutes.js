@@ -2,6 +2,7 @@ import { lazy, useMemo } from 'react';
 import Profile from '../container/profile';
 import Checkout from '../container/checkout';
 import OrderSuccess from '../container/oderSuccess';
+import Orders from '../container/orders';
 const LoginPage = lazy(() => import ('../container/login'));
 const Home = lazy(() => import ('../container/home'));
 const Cart = lazy(() => import ('../container/cart'));
@@ -28,37 +29,52 @@ const useRoutes = () => {
       id: 'cart',
       path: '/cart',
       element: <Cart />,
-      isPrivate: true
+      isPrivate: true,
+      userRole: 'user'
     },
     {
       id: 'checkout',
       path: '/checkout',
       element: <Checkout />,
-      isPrivate: true
+      isPrivate: true,
+      userRole: 'user'
     },
     {
       id: 'orderSuccess',
       path: '/orderConfirm',
       element: <OrderSuccess />,
-      isPrivate: true
+      isPrivate: true,
+      userRole: 'user'
     },
     {
       id: 'wishlist',
       path: '/wishlist',
       element: <WishList />,
-      isPrivate: true
+      isPrivate: true,
+      userRole: 'user'
     },
     {
       id: 'profile',
       path: '/profile',
       element: <Profile />,
-      isPrivate: true
+      isPrivate: true,
+      userRole: 'user'
     },
     {
       id: 'addProduct',
       path: '/addproduct',
       element: <AddProduct />,
-      isPrivate: true
+      isPrivate: true,
+      userRole: 'admin',
+      isAdminOnly: true,
+    },
+    {
+      id: 'orders',
+      path: '/orders',
+      element: <Orders />,
+      isPrivate: true,
+      userRole: 'admin',
+      isAdminOnly: true,
     },
     {
       id: 'product',

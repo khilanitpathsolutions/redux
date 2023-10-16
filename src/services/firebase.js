@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import {getAuth,GoogleAuthProvider,signInWithEmailAndPassword,signInWithPopup,} from "firebase/auth";
-import {getFirestore,doc,setDoc,getDoc,collection, serverTimestamp, addDoc,} from "firebase/firestore";
+import {getFirestore,doc,setDoc,getDoc,collection, serverTimestamp, addDoc, updateDoc,} from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
@@ -261,8 +261,11 @@ const addOrderToFirestore = async (userId, orderData) => {
     const ordersCollection = collection(firestore, "orders");
     const userDocRef = doc(ordersCollection, userId);
     const userOrdersCollection = collection(userDocRef, "userOrders");
-    const orderRef = await addDoc(userOrdersCollection, {
+    const orderDocRef = await addDoc(userOrdersCollection, {
+      orderId: "",
+      orderStatus: "",
       userId: userId,
+      email: auth.currentUser.email,
       shippingAddress: orderData.shippingAddress,
       paymentMethod: orderData.paymentMethod,
       items: orderData.items,
@@ -272,13 +275,15 @@ const addOrderToFirestore = async (userId, orderData) => {
       totalAmount: orderData.totalAmount,
       timestamp: serverTimestamp(),
     });
-
-    console.log("Order added successfully with ID:", orderRef.id);
+    const orderId = orderDocRef.id;
+    await updateDoc(orderDocRef, { orderId });
+    console.log("Order added successfully with ID:", orderId);
   } catch (error) {
     console.error("Error adding order to Firestore:", error);
     throw error;
   }
 };
+
 export {
   app,
   analytics,

@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal, Button } from "react-bootstrap";
-import { createPortal } from "react-dom";
+import { Portal } from "react-portal";
 
 const CustomModal = ({ show, onHide, title, body, onCancel, onConfirm }) => {
 
@@ -8,7 +8,7 @@ const CustomModal = ({ show, onHide, title, body, onCancel, onConfirm }) => {
 
   return (
     <>
-      {createPortal(
+      <Portal node={document && document.getElementById('modal-root')}>
         <Modal show={show} onHide={onHide}>
           <Modal.Header>
             <Modal.Title>{title}</Modal.Title>
@@ -23,12 +23,7 @@ const CustomModal = ({ show, onHide, title, body, onCancel, onConfirm }) => {
             </Button>
           </Modal.Footer>
         </Modal>,
-        document.getElementById("modal-root")
-      )}
-      {createPortal(
-        <p>React Portal Example</p>,
-        document.getElementById("modal-root")
-      )}
+        </Portal>
     </>
   );
 };

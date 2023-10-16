@@ -3,6 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
   isLoggedIn: false,
   loggedInEmail: '', 
+  userRole: 'user'
 };
 
 const userSlice = createSlice({
@@ -12,10 +13,12 @@ const userSlice = createSlice({
     login: (state, action) => {
       state.isLoggedIn = true;
       state.loggedInEmail = action.payload.email; 
+      state.userRole = action.payload.userRole
     },
     logout: (state) => {
       state.isLoggedIn = false;
       state.loggedInEmail = ''; 
+      state.userRole = ''
     },
     register: (state, action) => {
       const { email, password } = action.payload; 

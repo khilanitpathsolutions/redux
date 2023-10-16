@@ -18,7 +18,7 @@ const Routing = () => {
         ))}
 
         {privateRoutes(true).map((route) => (
-          <Route key={route.id} path={route.path} element={<ProtectedRoute />}>
+          <Route key={route.id} path={route.path} element={<ProtectedRoute expectedUserRole={route.userRole} isAdminOnly={route.isAdminOnly} />}>
             <Route index element={route.element} />
           </Route>
         ))}

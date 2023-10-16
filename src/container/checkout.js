@@ -8,7 +8,7 @@ import paytm from "../assets/Paytm.svg";
 import phonepe from "../assets/phonepe.svg";
 import upi from "../assets/upi.svg";
 import { useNavigate } from "react-router-dom";
-import { addOrderToFirestore } from "../services/firebase";
+import { addOrderToFirestore} from "../services/firebase";
 
 const Checkout = () => {
   const { cartItems, user, fetchCartItems } = useCart();
@@ -479,13 +479,13 @@ const Checkout = () => {
                 key={items.id}
               >
                 <Card.Img
-                  src={items.image}
+                  src={items?.image}
                   alt="error"
                   style={{ width: "70px", height: "70px" }}
                 />
-                <Card.Title>{items.title}</Card.Title>
+                <Card.Title>{items?.title}</Card.Title>
                 <Card.Text className="h5">
-                  Price: {items.price} ₹ || Quantity x {items.quantity}
+                  Price: {items?.price} ₹ || Quantity x {items?.quantity}
                 </Card.Text>
               </Card>
             ))}
@@ -508,7 +508,7 @@ const Checkout = () => {
             </div>
             <br></br>
             <div
-              style={{ background: "#e6fff2" }}
+              style={{ background: "#e6fff2" ,borderRadius:'10px'}}
               className="d-flex flex-column align-items-center"
             >
               <h3>Cart-Total</h3>

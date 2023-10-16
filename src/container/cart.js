@@ -98,7 +98,7 @@ const Cart = () => {
                   >
                     <Card.Body className="d-flex flex-column">
                       <Card.Title className="text-truncate">
-                        {item.title}
+                        {item?.title}
                       </Card.Title>
                       <div
                         style={{
@@ -108,7 +108,7 @@ const Cart = () => {
                         }}
                       >
                         <LazyLoadImage
-                          src={item.image}
+                          src={item?.image}
                           alt="error"
                           effect="blur"
                           style={{
@@ -119,10 +119,10 @@ const Cart = () => {
                         />
                       </div>
                       <Card.Text className="h5">
-                        Price: {item.price} ₹
+                        Price: {item?.price} ₹
                       </Card.Text>
                       <Card.Text className="h4">
-                        Total Price: {(item.price * item.quantity).toFixed(1)}
+                        Total Price: {(item?.price * item?.quantity).toFixed(1)}
                       </Card.Text>
                       <div className="d-flex align-items-center">
                         <Button
@@ -170,7 +170,8 @@ const Cart = () => {
                 background: "#e6fff2",
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center"
+                alignItems: "center",
+                borderRadius:'10px'
               }}
             >
               <h3>Cart-Total</h3>

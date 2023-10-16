@@ -17,6 +17,8 @@ const Product = () => {
   const { item_id } = useParams();
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
+  const userRole = useSelector((state) => state.user.userRole);
+  const isAdmin = userRole === "admin";
   const dispatch = useDispatch();
 
   const { data: fetchedData, loading } = useFetch(`/products/${item_id}`);
@@ -60,10 +62,12 @@ const Product = () => {
             borderRadius: "25px",
           }}
         >
-          <WishlistIcon
+        {isAdmin ? (<div></div>) : (
+            <WishlistIcon
             item={product}
             onToggleWishlist={()=>handleToggleWishlist(product)}
           />
+        )}
           <Row>
             <Col md={4}>
               <LazyLoadImage
@@ -96,6 +100,9 @@ const Product = () => {
                 </Card.Text>
 
                 <div className="d-grid row gy-3 mt-auto  w-100">
+                {isAdmin ? (
+                  <Button variant="danger" style={{width: '300px'}}>Delete Product</Button>
+                ):(
                   <Button
                     variant="warning"
                     style={{ width: "300px" }}
@@ -103,7 +110,8 @@ const Product = () => {
                   >
                     Add To Cart
                   </Button>
-                </div>
+                )}
+                  </div>
               </Card.Body>
             </Col>
           </Row>
