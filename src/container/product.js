@@ -1,7 +1,7 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { addToCart } from "../store/reducers/cartSlice";
 import { useParams } from "react-router-dom";
-import { Button, Card, Spinner, Row, Col } from "react-bootstrap";
+import { Button, Card, Spinner, Row, Col, Toast } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { useDispatch, useSelector } from "react-redux";
 import useFetch from "../hooks/useFetch";
@@ -10,8 +10,11 @@ import useToggleWishlist from "../hooks/useToggleWishlist";
 import { addToCartInFirestore, auth } from "../services/firebase";
 import { useWishlist } from "../utils/wishlistContext";
 import { useCart } from "../utils/cartContext";
-import 'react-lazy-load-image-component/src/effects/blur.css';
+import "react-lazy-load-image-component/src/effects/blur.css";
 import { LazyLoadImage } from "react-lazy-load-image-component";
+import { BASE_URL } from "../utils/constants";
+import axios from "axios";
+import CustomModal from "../components/modal";
 
 const Product = () => {
   const { item_id } = useParams();
@@ -20,10 +23,14 @@ const Product = () => {
   const userRole = useSelector((state) => state.user.userRole);
   const isAdmin = userRole === "admin";
   const dispatch = useDispatch();
-
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [modalData, setModalData] = useState({
+    showConfirmModal: false,
+    itemToRemove: null,
+  });
   const { data: fetchedData, loading } = useFetch(`/products/${item_id}`);
   const product = fetchedData.data;
-  const {fetchCartItems}=useCart()
+  const { fetchCartItems } = useCart();
   const handleAddToCart = useCallback(
     async (item) => {
       if (isLoggedIn) {
@@ -34,16 +41,34 @@ const Product = () => {
         } catch (error) {
           console.log("Failed to add product to cart.");
         }
-        fetchCartItems()
+        fetchCartItems();
       } else {
         alert("Please login to add the product to the cart.");
       }
     },
-    [isLoggedIn, loggedInEmail, dispatch,fetchCartItems]
+    [isLoggedIn, loggedInEmail, dispatch, fetchCartItems]
   );
 
   const { fetchWishlistItems } = useWishlist();
   const handleToggleWishlist = useToggleWishlist(fetchWishlistItems);
+
+  const handleDelete = async (itemId) => {
+    try {
+      await axios.delete(`${BASE_URL}/products/${itemId}`);
+      console.log(`Product deleted successfully with itemId:-${itemId}`);
+      showSuccess();
+    } catch (error) {
+      console.error("Failed to delete product: ", error);
+    }
+  };
+
+  const hideSuccess = () => {
+    setShowSuccessToast(false);
+  };
+
+  const showSuccess = () => {
+    setShowSuccessToast(true);
+  };
 
   return (
     <>
@@ -62,18 +87,20 @@ const Product = () => {
             borderRadius: "25px",
           }}
         >
-        {isAdmin ? (<div></div>) : (
+          {isAdmin ? (
+            <div></div>
+          ) : (
             <WishlistIcon
-            item={product}
-            onToggleWishlist={()=>handleToggleWishlist(product)}
-          />
-        )}
+              item={product}
+              onToggleWishlist={() => handleToggleWishlist(product)}
+            />
+          )}
           <Row>
             <Col md={4}>
               <LazyLoadImage
                 src={product.image}
                 alt={product.title}
-                effect= "blur"
+                effect="blur"
                 style={{
                   width: "100%",
                   maxWidth: "350px",
@@ -100,24 +127,76 @@ const Product = () => {
                 </Card.Text>
 
                 <div className="d-grid row gy-3 mt-auto  w-100">
-                {isAdmin ? (
-                  <Button variant="danger" style={{width: '300px'}}>Delete Product</Button>
-                ):(
-                  <Button
-                    variant="warning"
-                    style={{ width: "300px" }}
-                    onClick={() => handleAddToCart(product)}
-                  >
-                    Add To Cart
-                  </Button>
-                )}
-                  </div>
+                  {isAdmin ? (
+                    <Button
+                      variant="danger"
+                      style={{ width: "300px" }}
+                      onClick={() => {
+                        setModalData({
+                          showConfirmModal: true,
+                          itemToRemove: product.id,
+                        });
+                      }}
+                    >
+                      Delete Product
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="warning"
+                      style={{ width: "300px" }}
+                      onClick={() => handleAddToCart(product)}
+                    >
+                      Add To Cart
+                    </Button>
+                  )}
+                </div>
               </Card.Body>
             </Col>
           </Row>
         </Card>
       )}
       <br></br>
+
+      <CustomModal
+        show={modalData.showConfirmModal}
+        onHide={() =>
+          setModalData({
+            showConfirmModal: false,
+            itemToRemove: null,
+          })
+        }
+        title="Confirm Delete"
+        body="Are you sure you want to Delete this Product ?"
+        onCancel={() =>
+          setModalData({
+            showConfirmModal: false,
+            itemToRemove: null,
+          })
+        }
+        onConfirm={() => {
+          handleDelete(modalData.itemToRemove);
+          setModalData({
+            showConfirmModal: false,
+            itemToRemove: null,
+          });
+        }}
+      />
+
+      <Toast
+        show={showSuccessToast}
+        onClose={hideSuccess}
+        className="position-fixed top-0 end-0 m-4"
+        delay={3000}
+        style={{ zIndex: "9999" }}
+        autohide
+        bg="success"
+        text="white"
+      >
+        <Toast.Header closeButton={false}>
+          <strong className="me-auto">Success</strong>
+        </Toast.Header>
+        <Toast.Body>Product Deleted Successfully</Toast.Body>
+      </Toast>
     </>
   );
 };

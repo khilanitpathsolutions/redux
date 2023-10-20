@@ -1,1 +1,1 @@
-export const BASE_URL = "https://products-hvmp.onrender.com"
+export const BASE_URL = "https://fakestoreapi.com"

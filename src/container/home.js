@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/reducers/cartSlice";
 import { toggleTheme } from "../store/reducers/themeSlice";
-import { Container, Row, Col, Card, Button, Spinner, DropdownButton, Dropdown, Form, Toast } from "react-bootstrap";
+import {Container,Row,Col,Card,Button,Spinner,DropdownButton,Dropdown,Form,Toast, Collapse,} from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import ImageSwiper from "../components/swiper";
 import { useNavigate } from "react-router-dom";
@@ -19,9 +19,12 @@ import "../index.css";
 import axios from "axios";
 import { BASE_URL } from "../utils/constants";
 import CustomModal from "../components/modal";
+import useDebounce from "../hooks/useDebounce";
+import { BoxArrowDown, BoxArrowUp } from "react-bootstrap-icons";
+import Footer from "../components/footer";
 
-  const Home = () => {
-  const dispatch = useDispatch(); 
+const Home = () => {
+  const dispatch = useDispatch();
   const theme = useSelector((state) => state.theme);
   const loggedInEmail = useSelector((state) => state.user.loggedInEmail);
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
@@ -30,7 +33,6 @@ import CustomModal from "../components/modal";
   const [isLoading, setIsLoading] = useState(true);
   const userRole = useSelector((state) => state.user.userRole);
   const isAdmin = userRole === "admin";
-  const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
   const { data: fetchedData, loading } = useFetch("/products");
   const { fetchWishlistItems } = useWishlist();
@@ -38,17 +40,17 @@ import CustomModal from "../components/modal";
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [modalData, setModalData] = useState({
     showConfirmModal: false,
-    itemToRemove: null
+    itemToRemove: null,
   });
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useDebounce("", 500);
   const hideSuccess = () => {
     setShowSuccessToast(false);
   };
 
   const showSuccess = () => {
-    setShowSuccessToast(true)
-  }
+    setShowSuccessToast(true);
+  };
   const themeStyles = {
     light: {
       backgroundColor: "#e3e3e3",
@@ -66,30 +68,9 @@ import CustomModal from "../components/modal";
 
   const products = fetchedData?.data || [];
 
-  const debounce = (func, delay) => {
-    let timeoutId;
-    return function () {
-      const context = this;
-      const args = arguments;
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        func.apply(context, args);
-      }, delay);
-    };
-  };
-
-  const debouncedFilter = useCallback(
-    debounce((query) => {
-      setSearchQuery(query);
-      console.log("Debounce Called")
-    }, 500),
-    []
-  );
-  
-    const handleSearchInputChange = (e) => {
+  const handleSearchInputChange = (e) => {
     const query = e.target.value;
     setDebouncedSearchQuery(query);
-    debouncedFilter(query); 
   };
 
   const handleViewProduct = useCallback(
@@ -144,11 +125,14 @@ import CustomModal from "../components/modal";
   );
 
   const filteredProducts = products
-  .filter(
-    (item) =>
-      item.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-      item.price.toString().toLowerCase().includes(debouncedSearchQuery.toLowerCase())
-  )
+    .filter(
+      (item) =>
+        item.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+        item.price
+          .toString()
+          .toLowerCase()
+          .includes(debouncedSearchQuery.toLowerCase())
+    )
     .filter((item) =>
       selectedCategories.length === 0
         ? true
@@ -161,19 +145,24 @@ import CustomModal from "../components/modal";
         return b.price - a.price;
       }
     });
-    const uniqueCategories = [...new Set(products.map((item) => item.category))];
+  const uniqueCategories = [...new Set(products.map((item) => item.category))];
 
-    const handleDelete = async (itemId) => {
-      try {
-        await axios.delete(`${BASE_URL}/products/${itemId}`);
-        console.log(`Product deleted successfully with itemId:-${itemId}`);
-        showSuccess();
-      } catch (error) {
-        console.error("Failed to delete product: ", error);
-      }
+  const handleDelete = async (itemId) => {
+    try {
+      await axios.delete(`${BASE_URL}/products/${itemId}`);
+      console.log(`Product deleted successfully with itemId:-${itemId}`);
+      showSuccess();
+    } catch (error) {
+      console.error("Failed to delete product: ", error);
+    }
+  };
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    const toggleCollapse = () => {
+      setIsCollapsed((prevIsCollapsed) => !prevIsCollapsed);
     };
     
-  return (
+     return (
     <>
       <Helmet>
         <title>Redux-Store</title>
@@ -191,19 +180,32 @@ import CustomModal from "../components/modal";
       >
         <NavbarComponent />
         <ImageSwiper />
+        
+        <div className="w-100 d-flex justify-content-center" style={{ marginTop: "5px" }}>
+  <Button onClick={toggleCollapse} variant="info">
+    {isCollapsed ? <BoxArrowDown size={25} /> : <BoxArrowUp size={25} />}
+  </Button>
+</div>
+
         {isLoading ? (
           <div className="d-flex justify-content-center align-items-center h-100">
             <Spinner animation="border" variant="primary" />
           </div>
         ) : (
-          <Container className="my-4">
-          <div className="d-flex justify-content-between align-items-center mb-3">
+         <Container className="my-4">
+          <>
+          {isCollapsed ? null : (
+          <Collapse in={isCollapsed}>
+       
+          <Row className="mb-3 d-flex justify-content-between">
+            <Col xs={12} sm={6} md={3} lg={2}>
               {isAdmin && (
                 <Button variant="secondary" onClick={handleAddProduct}>
                   ADD Products
                 </Button>
-              )}
-
+        )}
+            </Col>
+            <Col xs={12} sm={6} md={3} lg={2}>
               <DropdownButton
                 variant="dark"
                 title={
@@ -234,7 +236,8 @@ import CustomModal from "../components/modal";
                   </Dropdown.Item>
                 ))}
               </DropdownButton>
-
+            </Col>
+            <Col xs={12} sm={6} md={3} lg={2}>
               <DropdownButton
                 variant="info"
                 title={`Sort ${
@@ -248,35 +251,47 @@ import CustomModal from "../components/modal";
                   High to Low
                 </Dropdown.Item>
               </DropdownButton>
-
+            </Col>
+            <Col xs={12} sm={6} md={3} lg={2}>
               <input
                 placeholder="Search..."
-                value={searchQuery}
+                className="search"
+                value={debouncedSearchQuery}
                 onChange={handleSearchInputChange}
                 style={{
                   border: "1px solid black",
                   borderRadius: "10px",
-                  width: "25%",
+                  width: "100%",
                   height: "35px",
                   fontSize: "20px",
                 }}
               ></input>
-
-              <Button onClick={() => dispatch(toggleTheme())} variant="primary">
+            </Col>
+            <Col xs={12} sm={6} md={3} lg={2}>
+              <Button
+                onClick={() => dispatch(toggleTheme())}
+                variant="primary"
+              >
                 Toggle Theme
               </Button>
-            </div>
-
+            </Col>
+          </Row>
+      </Collapse>
+          )}
+            </>
+      
             <Row xs={1} sm={2} md={3} lg={4} className="g-4">
               {filteredProducts.map((item) => (
                 <Col key={item.id}>
                   <Card style={{ height: "100%", borderRadius: "20px" }}>
-                  {isAdmin ? (<div></div>):(
+                    {isAdmin ? (
+                      <div></div>
+                    ) : (
                       <WishlistIcon
-                      item={item}
-                      onToggleWishlist={() => handleToggleWishlist(item)}
-                    />
-                  )}
+                        item={item}
+                        onToggleWishlist={() => handleToggleWishlist(item)}
+                      />
+                    )}
                     <div
                       style={{
                         width: "100%",
@@ -317,33 +332,37 @@ import CustomModal from "../components/modal";
                       </Card.Text>
                     </Card.Body>
                     {isAdmin ? (
-                  <>
-                    <Button variant="primary" style={{ margin: "5px" }}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" style={{ margin: "5px" }}  onClick={() => {
-                              setModalData({
-                                showConfirmModal: true,
-                                itemToRemove: item.id
-                              });
-                            }}>
-                      Delete
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button variant="primary" style={{ margin: "5px" }}>
-                      Buy Now
-                    </Button>
-                    <Button
-                      onClick={() => handleAddToCart(item)}
-                      variant="warning"
-                      style={{ margin: "5px" }}
-                    >
-                      ADD TO CART
-                    </Button>
-                  </>
-                )}
+                      <>
+                        <Button variant="primary" style={{ margin: "5px" }}>
+                          Edit
+                        </Button>
+                        <Button
+                          variant="danger"
+                          style={{ margin: "5px" }}
+                          onClick={() => {
+                            setModalData({
+                              showConfirmModal: true,
+                              itemToRemove: item.id,
+                            });
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button variant="primary" style={{ margin: "5px" }}>
+                          Buy Now
+                        </Button>
+                        <Button
+                          onClick={() => handleAddToCart(item)}
+                          variant="warning"
+                          style={{ margin: "5px" }}
+                        >
+                          ADD TO CART
+                        </Button>
+                      </>
+                    )}
                   </Card>
                 </Col>
               ))}
@@ -360,14 +379,14 @@ import CustomModal from "../components/modal";
         <hr />
       </div>
 
- {/* pop-up modals */}
- 
+      {/* pop-up modals */}
+
       <CustomModal
         show={modalData.showConfirmModal}
         onHide={() =>
           setModalData({
             showConfirmModal: false,
-            itemToRemove: null
+            itemToRemove: null,
           })
         }
         title="Confirm Delete"
@@ -375,19 +394,19 @@ import CustomModal from "../components/modal";
         onCancel={() =>
           setModalData({
             showConfirmModal: false,
-            itemToRemove: null
+            itemToRemove: null,
           })
         }
         onConfirm={() => {
           handleDelete(modalData.itemToRemove);
           setModalData({
             showConfirmModal: false,
-            itemToRemove: null
+            itemToRemove: null,
           });
         }}
       />
 
-<Toast
+      <Toast
         show={showSuccessToast}
         onClose={hideSuccess}
         className="position-fixed top-0 end-0 m-4"
@@ -402,6 +421,8 @@ import CustomModal from "../components/modal";
         </Toast.Header>
         <Toast.Body>Product Deleted Successfully</Toast.Body>
       </Toast>
+
+      <Footer />
     </>
   );
 };

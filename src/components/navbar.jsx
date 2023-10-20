@@ -142,6 +142,7 @@ const NavbarComponent = () => {
                   <Dropdown.Menu>
                     {loggedInEmail ? (
                       <>
+                      <Dropdown.Item>User:-{loggedInEmail}</Dropdown.Item>
                         <Dropdown.Item onClick={handleProfile}>Profile</Dropdown.Item>
                         {isAdmin && (
                           <Dropdown.Item onClick={handleOrders}>Orders</Dropdown.Item>

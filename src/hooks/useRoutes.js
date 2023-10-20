@@ -3,6 +3,7 @@ import Profile from '../container/profile';
 import Checkout from '../container/checkout';
 import OrderSuccess from '../container/oderSuccess';
 import Orders from '../container/orders';
+import Counter from '../container/classComponent';
 const LoginPage = lazy(() => import ('../container/login'));
 const Home = lazy(() => import ('../container/home'));
 const Cart = lazy(() => import ('../container/cart'));
@@ -86,6 +87,12 @@ const useRoutes = () => {
       id: 'home',
       path: '/',
       element: <Home />,
+      isPublic: true
+    },
+    {
+      id: 'class',
+      path: '/class',
+      element: <Counter />,
       isPublic: true
     }
   ], [])

@@ -30,12 +30,11 @@ const Orders = () => {
         throw error;
       }
     };
-
     const fetchOrderStatusesFromFirestore = async () => {
       try {
         const querySnapshot = await getDocs(ordersQuery);
         const orderStatusData = {};
-
+        
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           orderStatusData[data.orderId] = data.orderStatus;
@@ -46,11 +45,11 @@ const Orders = () => {
         console.error("Error fetching Order statuses:", error.message);
       }
     };
-
+    
     fetchOrdersFromFirestore();
     fetchOrderStatusesFromFirestore();
   }, []);
-
+  
   const handleOrderStatusChange = (event, orderId) => {
     const newStatus = event.target.value;
     setUpdatedOrderStatuses((prevOrderStatuses) => ({
@@ -66,12 +65,12 @@ const Orders = () => {
       await updateDoc(orderDocRef, {
         orderStatus: newStatus,
       });
-
+      
       setOrderStatuses((prevOrderStatuses) => ({
         ...prevOrderStatuses,
         [orderId]: newStatus,
       }));
-
+      
       setShowSuccessAlert(true);
       setUpdatedOrderStatuses((prevOrderStatuses) => {
         const updatedStatuses = { ...prevOrderStatuses };
@@ -86,7 +85,8 @@ const Orders = () => {
       console.error("Error updating order status:", error.message);
     }
   };
-
+  
+  console.log("Orders:-", orders)
   const handleDeleteOrder = async (userId, orderId) => {
     try {
       console.log("Deleting order with ID:", orderId);
@@ -167,10 +167,10 @@ const Orders = () => {
                         {order.shippingAddress.phoneNumber}
                       </td>
                       <td>
-                        {new Date(
+                         {new Date(
                           order.timestamp.seconds * 1000 +
                             order.timestamp.nanoseconds / 1000000
-                        ).toLocaleDateString()}
+                        ).toLocaleDateString()} 
                       </td>
 
                       <td>{order.totalAmount} ₹</td>
@@ -199,7 +199,7 @@ const Orders = () => {
                             handleDeleteOrder(order.userId, order.orderId)
                           }
                         >
-                          delete
+                          Delete
                         </Button>
                       </td>
                     </tr>

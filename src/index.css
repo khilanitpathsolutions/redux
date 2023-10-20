@@ -9,3 +9,10 @@ body{
         align-items: center;
     }
 }
+
+@media (max-width: 450px){
+    .search{
+        width: 50% !important
+    }
+}
+
