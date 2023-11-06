@@ -10,13 +10,17 @@ const useFetch = (endpoint) => {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
+    setLoading(true);
+
     try {
-      const response = await axios.get(`${BASE_URL}${endpoint}`);
-      const responseData = response.data;
-      setData({ data: responseData, error: null });
+      setTimeout(async () => {
+        const response = await axios.get(`${BASE_URL}${endpoint}`);
+        const responseData = response.data;
+        setData({ data: responseData, error: null });
+        setLoading(false);
+      }, 2000);
     } catch (error) {
-      setData({ data: null, error: error });   
-    } finally {
+      setData({ data: null, error: error });
       setLoading(false);
     }
   }, [endpoint]);

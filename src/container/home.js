@@ -1,8 +1,20 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../store/reducers/cartSlice";
 import { toggleTheme } from "../store/reducers/themeSlice";
-import {Container,Row,Col,Card,Button,Spinner,DropdownButton,Dropdown,Form,Toast, Collapse,} from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  DropdownButton,
+  Dropdown,
+  Form,
+  Toast,
+  Collapse,
+  Placeholder,
+} from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import ImageSwiper from "../components/swiper";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +34,9 @@ import CustomModal from "../components/modal";
 import useDebounce from "../hooks/useDebounce";
 import { BoxArrowDown, BoxArrowUp } from "react-bootstrap-icons";
 import Footer from "../components/footer";
+import { Portal } from "react-portal";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css'; 
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -30,7 +45,6 @@ const Home = () => {
   const isLoggedIn = useSelector((state) => state.user.isLoggedIn);
   const navigate = useNavigate();
   const { fetchCartItems } = useCart();
-  const [isLoading, setIsLoading] = useState(true);
   const userRole = useSelector((state) => state.user.userRole);
   const isAdmin = userRole === "admin";
   const [sortOrder, setSortOrder] = useState("asc");
@@ -44,6 +58,7 @@ const Home = () => {
   });
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useDebounce("", 500);
+
   const hideSuccess = () => {
     setShowSuccessToast(false);
   };
@@ -61,10 +76,6 @@ const Home = () => {
       textColor: "white",
     },
   };
-
-  useEffect(() => {
-    setIsLoading(loading);
-  }, [loading]);
 
   const products = fetchedData?.data || [];
 
@@ -115,14 +126,20 @@ const Home = () => {
           console.log("Product added to cart!");
         } catch (error) {
           console.log("Failed to add product to the cart.");
+          toast.error("Failed to add product to the cart.", {
+            position: toast.POSITION.TOP_RIGHT,
+          });
         }
         fetchCartItems();
       } else {
-        alert("Please login to add the product to the cart.");
+        toast.error("Please login to add the product to the cart.", {
+          position: toast.POSITION.TOP_RIGHT,
+        });
       }
     },
     [isLoggedIn, loggedInEmail, dispatch, fetchCartItems]
   );
+  
 
   const filteredProducts = products
     .filter(
@@ -146,6 +163,7 @@ const Home = () => {
       }
     });
   const uniqueCategories = [...new Set(products.map((item) => item.category))];
+  console.log('Categories>>>', uniqueCategories)
 
   const handleDelete = async (itemId) => {
     try {
@@ -156,13 +174,13 @@ const Home = () => {
       console.error("Failed to delete product: ", error);
     }
   };
-    const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const toggleCollapse = () => {
-      setIsCollapsed((prevIsCollapsed) => !prevIsCollapsed);
-    };
-    
-     return (
+  const toggleCollapse = () => {
+    setIsCollapsed((prevIsCollapsed) => !prevIsCollapsed);
+  };
+  const numPlaceholderCards = 20;
+  return (
     <>
       <Helmet>
         <title>Redux-Store</title>
@@ -180,195 +198,225 @@ const Home = () => {
       >
         <NavbarComponent />
         <ImageSwiper />
-        
-        <div className="w-100 d-flex justify-content-center" style={{ marginTop: "5px" }}>
-  <Button onClick={toggleCollapse} variant="info">
-    {isCollapsed ? <BoxArrowDown size={25} /> : <BoxArrowUp size={25} />}
-  </Button>
-</div>
 
-        {isLoading ? (
-          <div className="d-flex justify-content-center align-items-center h-100">
-            <Spinner animation="border" variant="primary" />
-          </div>
-        ) : (
-         <Container className="my-4">
+        <div
+          className="w-100 d-flex justify-content-center"
+          style={{ marginTop: "5px" }}
+        >
+          <Button onClick={toggleCollapse} variant="info">
+            {isCollapsed ? (
+              <BoxArrowDown size={25} />
+            ) : (
+              <BoxArrowUp size={25} />
+            )}
+          </Button>
+        </div>
+        <Container className="my-4">
           <>
-          {isCollapsed ? null : (
-          <Collapse in={isCollapsed}>
-       
-          <Row className="mb-3 d-flex justify-content-between">
-            <Col xs={12} sm={6} md={3} lg={2}>
-              {isAdmin && (
-                <Button variant="secondary" onClick={handleAddProduct}>
-                  ADD Products
-                </Button>
-        )}
-            </Col>
-            <Col xs={12} sm={6} md={3} lg={2}>
-              <DropdownButton
-                variant="dark"
-                title={
-                  selectedCategories.length === 0
-                    ? "All Categories"
-                    : selectedCategories.join("+")
-                }
-              >
-                <Dropdown.Item
-                  key="All"
-                  active={selectedCategories.length === 0}
-                  onClick={() => setSelectedCategories([])}
-                >
-                  All Categories
-                </Dropdown.Item>
-                <Dropdown.Divider />
-                {uniqueCategories.map((category) => (
-                  <Dropdown.Item
-                    key={category}
-                    active={isCategorySelected(category)}
-                    onClick={() => handleFilterCategory(category)}
-                  >
-                    <Form.Check
-                      type="checkbox"
-                      label={category}
-                      checked={isCategorySelected(category)}
-                    />
-                  </Dropdown.Item>
-                ))}
-              </DropdownButton>
-            </Col>
-            <Col xs={12} sm={6} md={3} lg={2}>
-              <DropdownButton
-                variant="info"
-                title={`Sort ${
-                  sortOrder === "asc" ? "Low to High" : "High to Low"
-                }`}
-              >
-                <Dropdown.Item onClick={() => handleSortOrderChange("asc")}>
-                  Low to High
-                </Dropdown.Item>
-                <Dropdown.Item onClick={() => handleSortOrderChange("desc")}>
-                  High to Low
-                </Dropdown.Item>
-              </DropdownButton>
-            </Col>
-            <Col xs={12} sm={6} md={3} lg={2}>
-              <input
-                placeholder="Search..."
-                className="search"
-                value={debouncedSearchQuery}
-                onChange={handleSearchInputChange}
-                style={{
-                  border: "1px solid black",
-                  borderRadius: "10px",
-                  width: "100%",
-                  height: "35px",
-                  fontSize: "20px",
-                }}
-              ></input>
-            </Col>
-            <Col xs={12} sm={6} md={3} lg={2}>
-              <Button
-                onClick={() => dispatch(toggleTheme())}
-                variant="primary"
-              >
-                Toggle Theme
-              </Button>
-            </Col>
-          </Row>
-      </Collapse>
-          )}
-            </>
-      
-            <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-              {filteredProducts.map((item) => (
-                <Col key={item.id}>
-                  <Card style={{ height: "100%", borderRadius: "20px" }}>
-                    {isAdmin ? (
-                      <div></div>
-                    ) : (
-                      <WishlistIcon
-                        item={item}
-                        onToggleWishlist={() => handleToggleWishlist(item)}
-                      />
+            {isCollapsed ? null : (
+              <Collapse in={isCollapsed}>
+                <Row className="mb-3 d-flex justify-content-between">
+                  <Col xs={12} sm={6} md={3} lg={2}>
+                    {isAdmin && (
+                      <Button variant="secondary" onClick={handleAddProduct}>
+                        ADD Products
+                      </Button>
                     )}
-                    <div
-                      style={{
-                        width: "100%",
-                        display: "flex",
-                        justifyContent: "center",
-                      }}
+                  </Col>
+                  <Col xs={12} sm={6} md={3} lg={2}>
+                    <DropdownButton
+                      variant="dark"
+                      title={
+                        selectedCategories.length === 0
+                          ? "All Categories"
+                          : selectedCategories.join("+")
+                      }
                     >
-                      <LazyLoadImage
-                        variant="top"
-                        src={item.image}
-                        effect="blur"
-                        alt="error"
+                      <Dropdown.Item
+                        key="All"
+                        active={selectedCategories.length === 0}
+                        onClick={() => setSelectedCategories([])}
+                      >
+                        All Categories
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      {uniqueCategories.map((category) => (
+                        <Dropdown.Item
+                          key={category}
+                          active={isCategorySelected(category)}
+                          onClick={() => handleFilterCategory(category)}
+                        >
+                          <Form.Check
+                            type="checkbox"
+                            label={category}
+                            checked={isCategorySelected(category)}
+                          />
+                        </Dropdown.Item>
+                      ))}
+                    </DropdownButton>
+                  </Col>
+                  <Col xs={12} sm={6} md={3} lg={2}>
+                    <DropdownButton
+                      variant="info"
+                      title={`Sort ${
+                        sortOrder === "asc" ? "Low to High" : "High to Low"
+                      }`}
+                    >
+                      <Dropdown.Item
+                        onClick={() => handleSortOrderChange("asc")}
+                      >
+                        Low to High
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        onClick={() => handleSortOrderChange("desc")}
+                      >
+                        High to Low
+                      </Dropdown.Item>
+                    </DropdownButton>
+                  </Col>
+                  <Col xs={12} sm={6} md={3} lg={2}>
+                    <input
+                      placeholder="Search..."
+                      className="search"
+                      value={debouncedSearchQuery}
+                      onChange={handleSearchInputChange}
+                      style={{
+                        border: "1px solid black",
+                        borderRadius: "10px",
+                        width: "100%",
+                        height: "35px",
+                        fontSize: "20px",
+                      }}
+                    ></input>
+                  </Col>
+                  <Col xs={12} sm={6} md={3} lg={2}>
+                    <Button
+                      onClick={() => dispatch(toggleTheme())}
+                      variant="primary"
+                    >
+                      Toggle Theme
+                    </Button>
+                  </Col>
+                </Row>
+              </Collapse>
+            )}
+          </>
+          <Row xs={1} sm={2} md={3} lg={4} className="g-4">
+            {loading
+              ? Array.from({ length: numPlaceholderCards }).map((_, index) => (
+                  <Col key={index}>
+                    <Card style={{ height: "100%", borderRadius: "20px" }}>
+                      <Card.Body>
+                        <Placeholder as={Card.Title} animation="glow">
+                          <Placeholder xs={12} />
+                        </Placeholder>
+                        <Placeholder as={Card.Text} animation="glow">
+                          <Placeholder xs={12} />
+                          <Placeholder xs={12} />
+                          <Placeholder xs={12} />
+                        </Placeholder>
+                        {isAdmin ? (
+                          <>
+                          <Placeholder.Button variant="primary" xs={12} />
+                          <Placeholder.Button variant="danger" xs={12}/>
+                        </>
+                        ) : (
+                         <>
+                        <Placeholder.Button variant="primary" xs={12} />
+                        <Placeholder.Button variant="warning" xs={12}/>
+                        </>
+                        )}
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                ))
+              : filteredProducts.map((item) => (
+                  <Col key={item.id}>
+                    <Card style={{ height: "100%", borderRadius: "20px" }}>
+                      {isAdmin ? (
+                        <div></div>
+                      ) : (
+                        <WishlistIcon
+                          item={item}
+                          onToggleWishlist={() => handleToggleWishlist(item)}
+                        />
+                      )}
+                      <div
                         style={{
-                          width: "220px",
-                          height: "220px",
-                          padding: "10px",
-                          cursor: "pointer",
+                          width: "100%",
+                          display: "flex",
+                          justifyContent: "center",
                         }}
-                        onClick={() => handleViewProduct(item.id)}
-                      />
-                    </div>
-                    <Card.Body className="d-flex flex-column">
-                      <Card.Title className="text-truncate">
-                        {item?.title}
-                      </Card.Title>
-                      <Card.Text className="h6 text-truncate">
-                        {item?.description}
-                      </Card.Text>
-                      <Card.Text className="h5">
-                        Category: {item?.category}
-                      </Card.Text>
-                      <Card.Text className="h3">
-                        Price: {item?.price} ₹
-                      </Card.Text>
-                      <Card.Text>
-                        Rating: {item?.rating?.rate}⭐ Rated By: (
-                        {item?.rating?.count} Users)
-                      </Card.Text>
-                    </Card.Body>
-                    {isAdmin ? (
-                      <>
-                        <Button variant="primary" style={{ margin: "5px" }}>
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
-                          style={{ margin: "5px" }}
-                          onClick={() => {
-                            setModalData({
-                              showConfirmModal: true,
-                              itemToRemove: item.id,
-                            });
+                      >
+                        <LazyLoadImage
+                          variant="top"
+                          src={item.image}
+                          effect="blur"
+                          alt="error"
+                          style={{
+                            width: "220px",
+                            height: "220px",
+                            padding: "10px",
+                            cursor: "pointer",
                           }}
-                        >
-                          Delete
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button variant="primary" style={{ margin: "5px" }}>
-                          Buy Now
-                        </Button>
-                        <Button
-                          onClick={() => handleAddToCart(item)}
-                          variant="warning"
-                          style={{ margin: "5px" }}
-                        >
-                          ADD TO CART
-                        </Button>
-                      </>
-                    )}
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </Container>
-        )}
+                          onClick={() => handleViewProduct(item.id)}
+                        />
+                      </div>
+                      <Card.Body className="d-flex flex-column">
+                        <Card.Title className="text-truncate">
+                          {item?.title}
+                        </Card.Title>
+                        <Card.Text className="h6 text-truncate">
+                          {item?.description}
+                        </Card.Text>
+                        <Card.Text className="h5">
+                          Category: {item?.category}
+                        </Card.Text>
+                        <Card.Text className="h3">
+                          Price: {item?.price} ₹
+                        </Card.Text>
+                        <Card.Text>
+                          Rating: {item?.rating?.rate}⭐ Rated By: (
+                          {item?.rating?.count} Users)
+                        </Card.Text>
+                      </Card.Body>
+                      {isAdmin ? (
+                        <>
+                          <Button variant="primary" style={{ margin: "5px" }}>
+                            Edit
+                          </Button>
+                          <Button
+                            variant="danger"
+                            style={{ margin: "5px" }}
+                            onClick={() => {
+                              setModalData({
+                                showConfirmModal: true,
+                                itemToRemove: item.id,
+                              });
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button variant="primary" style={{ margin: "5px" }}>
+                            Buy Now
+                          </Button>
+                          <Button
+                            onClick={() => handleAddToCart(item)}
+                            variant="warning"
+                            style={{ margin: "5px" }}
+                          >
+                            ADD TO CART
+                          </Button>
+                        </>
+                      )}
+                    </Card>
+                  </Col>
+                ))}
+          </Row>
+        </Container>
         <div style={{ display: "flex", justifyContent: "end", margin: "5px" }}>
           <Button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
@@ -405,23 +453,24 @@ const Home = () => {
           });
         }}
       />
-
-      <Toast
-        show={showSuccessToast}
-        onClose={hideSuccess}
-        className="position-fixed top-0 end-0 m-4"
-        delay={3000}
-        style={{ zIndex: "9999" }}
-        autohide
-        bg="success"
-        text="white"
-      >
-        <Toast.Header closeButton={false}>
-          <strong className="me-auto">Success</strong>
-        </Toast.Header>
-        <Toast.Body>Product Deleted Successfully</Toast.Body>
-      </Toast>
-
+      <Portal node={document && document.getElementById("modal-root")}>
+        <Toast
+          show={showSuccessToast}
+          onClose={hideSuccess}
+          className="position-fixed top-0 end-0 m-4"
+          delay={3000}
+          style={{ zIndex: "9999" }}
+          autohide
+          bg="success"
+          text="white"
+        >
+          <Toast.Header closeButton={false}>
+            <strong className="me-auto">Success</strong>
+          </Toast.Header>
+          <Toast.Body>Product Deleted Successfully</Toast.Body>
+        </Toast>
+      </Portal>
+      <ToastContainer autoClose={2000} />
       <Footer />
     </>
   );

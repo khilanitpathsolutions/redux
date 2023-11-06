@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { addToCart } from "../store/reducers/cartSlice";
 import { useParams } from "react-router-dom";
-import { Button, Card, Spinner, Row, Col, Toast } from "react-bootstrap";
+import { Button, Card, Row, Col, Toast, Placeholder } from "react-bootstrap";
 import NavbarComponent from "../components/navbar";
 import { useDispatch, useSelector } from "react-redux";
 import useFetch from "../hooks/useFetch";
@@ -15,6 +15,7 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import { BASE_URL } from "../utils/constants";
 import axios from "axios";
 import CustomModal from "../components/modal";
+import { ToastContainer, toast } from "react-toastify";
 
 const Product = () => {
   const { item_id } = useParams();
@@ -31,6 +32,7 @@ const Product = () => {
   const { data: fetchedData, loading } = useFetch(`/products/${item_id}`);
   const product = fetchedData.data;
   const { fetchCartItems } = useCart();
+
   const handleAddToCart = useCallback(
     async (item) => {
       if (isLoggedIn) {
@@ -39,11 +41,16 @@ const Product = () => {
           await addToCartInFirestore(auth.currentUser.uid, item);
           console.log("Product added to cart!");
         } catch (error) {
-          console.log("Failed to add product to cart.");
+          console.log("Failed to add product to the cart.");
+          toast.error("Failed to add product to the cart.", {
+            position: toast.POSITION.TOP_RIGHT,
+          });
         }
         fetchCartItems();
       } else {
-        alert("Please login to add the product to the cart.");
+        toast.error("Please login to add the product to the cart.", {
+          position: toast.POSITION.TOP_RIGHT,
+        });
       }
     },
     [isLoggedIn, loggedInEmail, dispatch, fetchCartItems]
@@ -75,9 +82,23 @@ const Product = () => {
       <NavbarComponent />
       <br />
       {loading ? (
-        <div className="d-flex justify-content-center align-items-center h-100">
-          <Spinner animation="border" variant="primary" />
-        </div>
+        <Card>
+        <Card.Body>
+          <Placeholder as={Card.Title} animation="glow">
+            <Placeholder xs={12} />
+          </Placeholder>
+          <Placeholder as={Card.Text} animation="glow">
+            <Placeholder xs={12} /> 
+            <Placeholder xs={12} />
+            <Placeholder xs={6}/> 
+          </Placeholder>
+          {isAdmin ? (
+            <Placeholder.Button variant="danger" xs={12} />
+          ):(
+            <Placeholder.Button variant="warning" xs={12} />
+          )}
+        </Card.Body>
+      </Card>
       ) : (
         <Card
           style={{
@@ -197,6 +218,7 @@ const Product = () => {
         </Toast.Header>
         <Toast.Body>Product Deleted Successfully</Toast.Body>
       </Toast>
+      <ToastContainer autoClose={2000} />
     </>
   );
 };

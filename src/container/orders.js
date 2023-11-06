@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import NavbarComponent from "../components/navbar";
 import { firestore } from "../services/firebase";
 import {collectionGroup,query,getDocs,deleteDoc,doc,updateDoc,} from "firebase/firestore";
-import {Table,Container,Row,Col,Spinner,Button,Alert,} from "react-bootstrap";
+import {Table,Container,Row,Col,Button,Alert, Card, Placeholder,} from "react-bootstrap";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
@@ -117,9 +117,18 @@ const Orders = () => {
     <>
       <NavbarComponent />
       {loading ? (
-        <div className="d-flex justify-content-center align-items-center h-100">
-          <Spinner animation="border" variant="primary" />
-        </div>
+        <Card>
+        <Card.Body>
+          <Placeholder as={Card.Title} animation="glow">
+            <Placeholder xs={12} />
+          </Placeholder>
+          <Placeholder as={Card.Text} animation="glow">
+            <Placeholder xs={12} /> 
+            <Placeholder xs={12} /> 
+          </Placeholder>
+          <Placeholder.Button variant="danger" xs={12} />  
+        </Card.Body>
+      </Card>
       ) : (
         <Container style={{ maxWidth: "100%" }}>
           <div className="d-flex justify-content-center">
